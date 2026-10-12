@@ -1,5 +1,4 @@
 from enum import Enum, auto
-import copy
 
 #Definições das classes representando dados a serem usados na simulação (TCB, CPU, Estado/Snapshot)
 
@@ -15,12 +14,12 @@ class TCB:
         self.prazo = prazo
 
     #atributos dinâmicos (alteram a cada tick durante a simulação):
-        self.estado_tarefa = None #AGUARDANDO, PRONTA, EXECUTANDO, SUSPENSA, FINALIZADA
-        self.cpu_atual_id = 0
+        self.estado_tarefa = EstadoTarefa.AGUARDANDO #AGUARDANDO, PRONTA, EXECUTANDO, SUSPENSA, FINALIZADA
+        self.id_cpu_atual = None
         self.tempo_exec_instancia = 0 #Quanto tempo a tarefa executou no ciclo atual
-        self.deadline_absoluto = ingresso + prazo
+        self.prazo_absoluto = ingresso + prazo
         self.instancias_concluidas = 0 
-        self.perdeu_prazo = 0
+        self.perdeu_prazo = False
 
 
 class EstadoTarefa(Enum):
@@ -31,9 +30,9 @@ class EstadoTarefa(Enum):
     FINALIZADA = auto() # Já completou 10 instâncias
 
 class Cpu:
-    def __init__(self, id_cpu: int, tarefa_alocada: int):
+    def __init__(self, id_cpu: int):
         self.id_cpu = id_cpu
-        self.tarefa_alocada = tarefa_alocada #recebe o id da tarefa alocada 
+        self.id_tarefa_alocada = None #recebe o id da tarefa alocada 
         self.tempo_desligada = 0
 
 class EstadoSimulacao:

@@ -8,10 +8,7 @@ class Simulacao:
         self.historico = [estado_inicial]
         self.instante_atual = 0 # aponta para o instante de tempo atual da simulação
 
-    @property
-    def estado_atual(self) -> EstadoSimulacao:
-        # Retorna o histórico ativo apontado por instante_atual
-        return self.historico[self.instante_atual]
+
 
     def avancar(self, passos: int = 1) -> None:
         for _ in range(passos):
@@ -20,7 +17,7 @@ class Simulacao:
                 self.instante_atual += 1
             else:
                 # Calcula o próximo tick [t, t+1)
-                novo_estado = self._executar_um_tick(self.estado_atual)
+                novo_estado = self._executar_um_tick(self.historico[self.instante_atual])
                 self.historico.append(novo_estado)
                 self.instante_atual += 1
 
@@ -33,7 +30,7 @@ class Simulacao:
         del self.historico[self.instante_atual + 1:]
         
         # Atualiza a tarefa no estado atual
-        estado_ativo = self.estado_atual
+        estado_ativo = self.historico[self.instante_atual]
         for i, tarefa in enumerate(estado_ativo.tarefas):
             if tarefa.id == id_tarefa:
                 estado_ativo.tarefas[i] = copy.deepcopy(nova_tarefa_modificada)

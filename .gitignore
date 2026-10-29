@@ -218,3 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+#Enunciado do simulador:
+simulador-escalonamento.md 
+simulador-escalonamento.pdf 

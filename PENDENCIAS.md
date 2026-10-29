@@ -9,7 +9,17 @@ Este arquivo acompanha o escopo; item em aberto não significa requisito atendid
 
 ## Próximas pendências do motor
 
-- [ ] Validar semanticamente alterações de tarefas, sem modificar o estado nem descartar o futuro se a alteração for rejeitada.
+- [x] Edição por campos: `modificar_tarefa_em_execucao(id_tarefa, **alteracoes)`. Campos disponíveis: ingresso, duracao, periodo, prazo, cor e estado_tarefa. Valida somente as entradas e sua compatibilidade com a ocorrência atual. CPU e prazo absoluto são administrados pelo motor, não enviados pelo usuário. Rejeição preserva o estado e o futuro; aceitação copia a tarefa, sincroniza CPUs e descarta só o futuro. O parser permanece responsável pela entrada do arquivo.
+
+### Semântica da edição
+
+- Trocar entre PRONTA, EXECUTANDO e SUSPENSA preserva o progresso e o instante da ativação atual. EXECUTANDO exige CPU livre ou a própria CPU, escolhida pelo motor.
+- Colocar uma ocorrência ativa em AGUARDANDO abandona seu progresso sem contabilizar conclusão e espera uma próxima ativação. Sair de AGUARDANDO para um estado ativo inicia uma ocorrência no tick atual, desde que a tarefa já tenha ingressado.
+- Alterar prazo recalcula o prazo absoluto a partir da ativação atual; eventual perda pelo novo prazo será verificada no próximo tick. Alterar ingresso não pode colocá-lo depois de uma ativação que ainda está em curso. Alterar período passa a orientar as próximas ativações, sem reiniciar a ocorrência atual.
+- FINALIZADA corresponde às dez ocorrências concluídas pelo motor. ID e campos internos (CPU, progresso, contadores e indicadores) não fazem parte da entrada editável.
+
+### Ainda pendente no motor
+
 - [ ] Definir a aplicação do quantum em RM/EDF antes de implementar sua contabilização. Hoje o valor é apenas armazenado.
 - [ ] Definir o tratamento de uma nova ativação quando a ocorrência anterior ainda não terminou. Hoje a nova ativação só ocorre se a tarefa estiver AGUARDANDO; não rejeitar duração ou prazo maior que período apenas para contornar essa lacuna.
 
@@ -18,7 +28,7 @@ Este arquivo acompanha o escopo; item em aberto não significa requisito atendid
 - [ ] Confirmar política de valores padrão exigida pelo requisito 3.2; o enunciado não especifica os valores concretos. Não preencher silenciosamente campos inválidos.
 - [x] Integrar o resultado do carregamento ao motor e verificar execução completa e passo a passo com arquivos reais, incluindo retrocesso.
 - [x] Manter mensagens de erro e avisos disponíveis para a futura interface, sem implementar Projeto B.
-- [ ] Alinhar as anotações de tipo de IDs em TCB e edição: o parser aceita IDs textuais e inteiros, mas as anotações existentes declaram somente int. A integração em execução funciona com ambos.
+- [x] Alinhar as anotações de tipo de IDs em TCB e edição com o parser: int ou str.
 
 ## Ainda fora desta rodada
 

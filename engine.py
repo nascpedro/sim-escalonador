@@ -1,6 +1,7 @@
 from models import *
 from scheduler import escalonar
 import copy
+import re
 
 class Simulacao:
     def __init__(self, estado_inicial: EstadoSimulacao, algoritmo: str):
@@ -53,16 +54,96 @@ class Simulacao:
         # Retrocede simulação com base no histórico
         self.instante_atual = max(0, self.instante_atual - passos)
 
-    def modificar_tarefa_em_execucao(self, id_tarefa: int, nova_tarefa_modificada: TCB) -> None:
-        # Removemos o histórico futuro da lista caso estejamos no passado
-        del self.historico[self.instante_atual + 1:]
-        
-        # Atualiza a tarefa no estado atual
-        estado_ativo = self.historico[self.instante_atual]
-        for i, tarefa in enumerate(estado_ativo.tarefas):
+    def modificar_tarefa_em_execucao(self, id_tarefa: int | str, **alteracoes) -> None:
+        """Edita ingresso, duracao, periodo, prazo, cor ou estado_tarefa.
+
+        Exemplo: modificar_tarefa_em_execucao(1, duracao=4).
+        CPU, progresso, contadores e prazo absoluto são administrados pelo motor.
+        PRONTA e SUSPENSA preservam uma ocorrência ativa; AGUARDANDO a abandona.
+        Rejeições preservam o histórico; aceitação descarta somente o futuro.
+        """
+        estado = self.historico[self.instante_atual]
+        indice = None
+        for i, tarefa in enumerate(estado.tarefas):
             if tarefa.id == id_tarefa:
-                estado_ativo.tarefas[i] = copy.deepcopy(nova_tarefa_modificada)
+                indice = i
                 break
+        if indice is None:
+            raise ValueError(f"Tarefa {id_tarefa!r} não encontrada.")
+        if not alteracoes:
+            return
+
+        # Valida apenas a entrada da edição, não a estrutura inteira do TCB.
+        limites = {'ingresso': 0, 'duracao': 1, 'periodo': 1, 'prazo': 1}
+        for campo, valor in alteracoes.items():
+            if campo in limites:
+                if type(valor) is not int or valor < limites[campo]:
+                    raise ValueError(f"{campo} deve ser inteiro maior ou igual a {limites[campo]}.")
+            elif campo == 'cor':
+                if not isinstance(valor, str) or not re.fullmatch(r'#?[0-9a-fA-F]{6}', valor):
+                    raise ValueError("cor deve ser RGB hexadecimal de seis dígitos.")
+                for outra in estado.tarefas:
+                    if outra.id != id_tarefa and outra.cor.lstrip('#').upper() == valor.lstrip('#').upper():
+                        raise ValueError("cor já utilizada por outra tarefa.")
+            elif campo == 'estado_tarefa':
+                if not isinstance(valor, EstadoTarefa):
+                    raise ValueError("estado_tarefa deve ser um valor de EstadoTarefa.")
+            else:
+                raise ValueError(f"{campo} não é um campo editável.")
+
+        nova = copy.deepcopy(estado.tarefas[indice])
+        for campo, valor in alteracoes.items():
+            setattr(nova, campo, valor)
+
+        anterior = estado.tarefas[indice]
+        ativos = (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO, EstadoTarefa.SUSPENSA)
+        if nova.estado_tarefa == EstadoTarefa.FINALIZADA and nova.instancias_concluidas < 10:
+            raise ValueError("FINALIZADA exige dez ocorrências concluídas.")
+        if nova.instancias_concluidas == 10 and nova.estado_tarefa != EstadoTarefa.FINALIZADA:
+            raise ValueError("Após dez ocorrências, a tarefa não pode ser reativada.")
+        if nova.estado_tarefa in ativos:
+            ativacao = anterior.prazo_absoluto - anterior.prazo
+            if anterior.estado_tarefa not in ativos:
+                # Entrar manualmente em PRONTA/EXECUTANDO/SUSPENSA inicia uma ocorrência agora.
+                ativacao = estado.tick
+                nova.tempo_exec_instancia = 0
+                nova.perdeu_prazo = False
+            if nova.ingresso > ativacao:
+                raise ValueError("ingresso não pode ser posterior à ativação da ocorrência atual.")
+            if nova.tempo_exec_instancia >= nova.duracao:
+                raise ValueError("duracao deve superar o tempo já executado da ocorrência ativa.")
+            nova.prazo_absoluto = ativacao + nova.prazo
+        elif anterior.instancias_concluidas == 0:
+            nova.prazo_absoluto = nova.ingresso + nova.prazo
+        if nova.estado_tarefa == EstadoTarefa.AGUARDANDO and anterior.estado_tarefa in ativos:
+            # A mudança manual abandona a ocorrência atual e espera a próxima ativação.
+            nova.tempo_exec_instancia = 0
+            nova.perdeu_prazo = False
+        if nova.prazo_absoluto != anterior.prazo_absoluto:
+            # Se o novo prazo já venceu, o próximo tick registra a perda no histórico.
+            nova.perdeu_prazo = False
+
+        # EXECUTANDO mantém a CPU atual ou usa uma livre, sem migração manual.
+        escolhida = None
+        if nova.estado_tarefa == EstadoTarefa.EXECUTANDO:
+            for cpu in estado.cpus:
+                if cpu.id_tarefa_alocada == id_tarefa:
+                    escolhida = cpu
+                    break
+                if cpu.id_tarefa_alocada is None and escolhida is None:
+                    escolhida = cpu
+            if escolhida is None:
+                raise ValueError("Não há CPU livre para colocar a tarefa em EXECUTANDO.")
+        nova.id_cpu_atual = escolhida.id_cpu if escolhida is not None else None
+
+        # Todas as verificações terminaram. Só agora altera o estado e descarta o futuro.
+        for cpu in estado.cpus:
+            if cpu.id_tarefa_alocada == id_tarefa:
+                cpu.id_tarefa_alocada = None
+        if escolhida is not None:
+            escolhida.id_tarefa_alocada = id_tarefa
+        estado.tarefas[indice] = nova
+        del self.historico[self.instante_atual + 1:]
 
     def _executar_um_tick(self, estado_ant: EstadoSimulacao) -> EstadoSimulacao:
         # 1. Clona estado_ant para não sobrescrever a foto do tick t

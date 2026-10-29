@@ -73,9 +73,7 @@ class TesteEventosAtivacao(unittest.TestCase):
                 sim = Simulacao(EstadoSimulacao(0, [tarefa], cpus, 0), 'RM')
                 sim.avancar(2)
                 if estado_pendente == EstadoTarefa.SUSPENSA:
-                    suspensa = copy.deepcopy(sim.historico[-1].tarefas[0])
-                    suspensa.estado_tarefa = EstadoTarefa.SUSPENSA
-                    sim.modificar_tarefa_em_execucao(7, suspensa)
+                    sim.modificar_tarefa_em_execucao(7, estado_tarefa=EstadoTarefa.SUSPENSA)
                 anterior = copy.deepcopy(sim.historico[-1])
                 self.assertEqual(anterior.tarefas[0].estado_tarefa, estado_pendente)
 
@@ -138,9 +136,7 @@ class TesteEventosAtivacao(unittest.TestCase):
         eventos_antigos = [copy.deepcopy(estado.eventos) for estado in futuro_antigo]
         sim.retroceder(5)
         prefixo = list(sim.historico[:2])
-        modificada = copy.deepcopy(sim.historico[1].tarefas[0])
-        modificada.cor = '00FF00'
-        sim.modificar_tarefa_em_execucao(7, modificada)
+        sim.modificar_tarefa_em_execucao(7, cor='00FF00')
         self.assertEqual(len(sim.historico), 2)
 
         sim.avancar(5)

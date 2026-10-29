@@ -4,7 +4,7 @@ from enum import Enum, auto
 
 #Task Control Block (TCB) - Estrutura de dados que representa uma tarefa
 class TCB:
-    def __init__(self, id_tarefa: int, cor: str, ingresso: int, duracao:int, periodo:int, prazo:int):
+    def __init__(self, id_tarefa: int | str, cor: str, ingresso: int, duracao:int, periodo:int, prazo:int):
     #atributos estaticos (serão lidos do arquivo de inicialização):
         self.id = id_tarefa
         self.cor = cor 

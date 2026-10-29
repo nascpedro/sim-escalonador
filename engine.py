@@ -70,19 +70,27 @@ class Simulacao:
         t = estado_ant.tick
         novo_estado.eventos = []
 
-        # 2. Ativa novas instâncias periódicas que chegam no tick
+        # 2. Registra a chegada inicial separadamente das ativações periódicas.
         for tarefa in novo_estado.tarefas:
+            if t == tarefa.ingresso:
+                novo_estado.eventos.append({
+                    'tipo': 'chegada', 'tick': t, 'id_tarefa': tarefa.id
+                })
             if tarefa.instancias_concluidas >= 10:
                 tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
                 continue
 
-            # Verifica se é o instante de chegada (ingresso ou múltiplo do período)
+            # Verifica se há uma ativação prevista no ingresso ou a cada período.
             if t >= tarefa.ingresso and (t - tarefa.ingresso) % tarefa.periodo == 0:
                 if tarefa.estado_tarefa == EstadoTarefa.AGUARDANDO:
                     tarefa.estado_tarefa = EstadoTarefa.PRONTA
                     tarefa.tempo_exec_instancia = 0
                     tarefa.prazo_absoluto = t + tarefa.prazo
                     tarefa.perdeu_prazo = False
+                    # Só registra quando a ocorrência realmente é ativada, no instante t.
+                    novo_estado.eventos.append({
+                        'tipo': 'ativacao', 'tick': t, 'id_tarefa': tarefa.id
+                    })
 
         # 3. Prontas e executando disputam CPU; preservamos os estados para o desempate.
         candidatas = []
@@ -95,8 +103,9 @@ class Simulacao:
         tarefas_ordenadas = escalonar(candidatas, self.algoritmo, sorteios)
         # Guarda o instante real da decisão, não o tick t+1 do estado retornado.
         ids_selecionadas = [tarefa.id for tarefa in tarefas_ordenadas[:len(novo_estado.cpus)]]
-        for ordem in sorteios:
-            novo_estado.eventos.append({
+        # Preserva os sorteios no início da lista, como nos snapshots anteriores.
+        for indice_sorteio, ordem in enumerate(sorteios):
+            novo_estado.eventos.insert(indice_sorteio, {
                 'tipo': 'sorteio',
                 'tick': t,
                 'ordem': ordem,

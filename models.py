@@ -41,6 +41,8 @@ class EstadoSimulacao:
         self.tarefas = tarefas
         self.cpus = cpus
         self.quantum = quantum
+        # Eventos do intervalo que produziu este estado; os anteriores ficam no histórico.
+        self.eventos = []
 
         
 

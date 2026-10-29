@@ -21,14 +21,14 @@ class TesteMotorPassos1e2(unittest.TestCase):
         # Avança 1 tick: executa o intervalo [0, 1)
         sim.avancar(1)
         self.assertEqual(sim.historico[sim.instante_atual].tick, 1)
-        # T1 chegou em t=0, então deve estar PRONTA; T2 ainda está AGUARDANDO
-        self.assertEqual(sim.historico[sim.instante_atual].tarefas[0].estado_tarefa, EstadoTarefa.PRONTA)
+        # T1 chegou em t=0 e foi despachada; T2 ainda está AGUARDANDO
+        self.assertEqual(sim.historico[sim.instante_atual].tarefas[0].estado_tarefa, EstadoTarefa.EXECUTANDO)
         self.assertEqual(sim.historico[sim.instante_atual].tarefas[1].estado_tarefa, EstadoTarefa.AGUARDANDO)
 
         # Avança até o tick 3 (passando pelo intervalo [2, 3) onde T2 chega em t=2)
         sim.avancar(2)
         self.assertEqual(sim.historico[sim.instante_atual].tick, 3)
-        self.assertEqual(sim.historico[sim.instante_atual].tarefas[1].estado_tarefa, EstadoTarefa.PRONTA)
+        self.assertEqual(sim.historico[sim.instante_atual].tarefas[1].estado_tarefa, EstadoTarefa.AGUARDANDO) # T2 já concluiu sua ocorrência.
         self.assertEqual(sim.historico[sim.instante_atual].tarefas[1].prazo_absoluto, 7) # t=2 + prazo=5
 
         # Testa retroceder para o tick 0 e garante que o passado não foi alterado

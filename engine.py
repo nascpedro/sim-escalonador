@@ -22,6 +22,33 @@ class Simulacao:
                 self.historico.append(novo_estado)
                 self.instante_atual += 1
 
+    def executar_completa(self) -> EstadoSimulacao:
+        # Executa até todas as tarefas estarem FINALIZADA, sem limite de passos.
+        while True:
+            estado = self.historico[self.instante_atual]
+            pendentes = []
+            for tarefa in estado.tarefas:
+                if tarefa.estado_tarefa != EstadoTarefa.FINALIZADA:
+                    pendentes.append(tarefa)
+
+            # Retorna assim que não houver tarefas pendentes, sem criar ticks extras.
+            if not pendentes:
+                return estado
+
+            if not estado.cpus:
+                raise RuntimeError("Execução completa interrompida: há tarefas pendentes, mas nenhuma CPU.")
+            for tarefa in pendentes:
+                # O motor atual não possui evento automático para retirar a suspensão.
+                if tarefa.estado_tarefa == EstadoTarefa.SUSPENSA:
+                    raise RuntimeError(
+                        f"Execução completa interrompida: tarefa {tarefa.id} suspensa. "
+                        "Altere seu estado manualmente antes de continuar."
+                    )
+
+
+            # Reutiliza o histórico quando existe; calcula um novo tick apenas no fim.
+            self.avancar()
+
     def retroceder(self, passos: int = 1) -> None:
         # Retrocede simulação com base no histórico
         self.instante_atual = max(0, self.instante_atual - passos)

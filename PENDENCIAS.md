@@ -21,7 +21,7 @@ Este arquivo acompanha o escopo; item em aberto não significa requisito atendid
 ### Ainda pendente no motor
 
 - [x] Quantum em RM/EDF: a seleção continua a cada tick, após chegadas/ativações e antes de executar o intervalo, sem aguardar a fatia acabar para permitir preempção. `tempo_exec_quantum` contabiliza execução contínua por tarefa (inclusive migração entre CPUs sem interrupção). Ao esgotar a fatia, registra `fim_quantum` em t+1 e zera o contador; no próximo tick, no mesmo instante t+1, a tarefa disputa novamente e pode continuar. Preserva o desempate de quem executava. Preempção, conclusão ou saída manual de EXECUTANDO reiniciam a fatia, sem apagar o progresso da ocorrência. Conclusão no limite do quantum tem precedência e não gera expiração redundante. Convenção do simulador: quantum=0 não limita a fatia. Histórico preserva contadores e eventos. Não foi adicionado modo sem preempção.
-- [ ] Definir o tratamento de uma nova ativação quando a ocorrência anterior ainda não terminou. Hoje a nova ativação só ocorre se a tarefa estiver AGUARDANDO; não rejeitar duração ou prazo maior que período apenas para contornar essa lacuna.
+- [ ] Confirmar com o professor o tratamento das ativações sobrepostas. Decisão provisória: manter a nova ativação ignorada enquanto houver ocorrência anterior ativa, sem reiniciar seu progresso, prazo ou quantum, e seguir para a interface. Não é conformidade garantida nem bloqueio para iniciar a interface; ver `docs.md`, seção 6. Não rejeitar duração ou prazo maior que período para esconder o caso.
 
 ## Pontos a verificar com o parser
 

@@ -3,6 +3,8 @@
 
 Simulador de escalonamento preemptivo multiprocessador com foco em sistemas de tempo real periódicos (Rate Monotonic e Earliest Deadline First), com suporte a múltiplos núcleos e controle de avançar e retroceder a simulação (time-travel debugging).
 
+Decisões, convenções e limitações atuais: [docs.md](docs.md). O que falta implementar: [PENDENCIAS.md](PENDENCIAS.md). A estrutura de interface apresentada abaixo ainda é uma proposta.
+
 ---
 
 ## 1. Como a Simulação Funciona: O Ciclo do Tick `[t, t+1)`

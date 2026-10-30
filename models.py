@@ -17,6 +17,7 @@ class TCB:
         self.estado_tarefa = EstadoTarefa.AGUARDANDO #AGUARDANDO, PRONTA, EXECUTANDO, SUSPENSA, FINALIZADA
         self.id_cpu_atual = None
         self.tempo_exec_instancia = 0 #Quanto tempo a tarefa executou no ciclo atual
+        self.tempo_exec_quantum = 0 # Execução na fatia atual; não é o total da ocorrência
         self.prazo_absoluto = ingresso + prazo
         self.instancias_concluidas = 0 
         self.perdeu_prazo = False

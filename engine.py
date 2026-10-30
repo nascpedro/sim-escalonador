@@ -135,6 +135,8 @@ class Simulacao:
             if escolhida is None:
                 raise ValueError("Não há CPU livre para colocar a tarefa em EXECUTANDO.")
         nova.id_cpu_atual = escolhida.id_cpu if escolhida is not None else None
+        if anterior.estado_tarefa != EstadoTarefa.EXECUTANDO or nova.estado_tarefa != EstadoTarefa.EXECUTANDO:
+            nova.tempo_exec_quantum = 0
 
         # Todas as verificações terminaram. Só agora altera o estado e descarta o futuro.
         for cpu in estado.cpus:
@@ -173,7 +175,8 @@ class Simulacao:
                         'tipo': 'ativacao', 'tick': t, 'id_tarefa': tarefa.id
                     })
 
-        # 3. Prontas e executando disputam CPU; preservamos os estados para o desempate.
+        # 3. Reavalia a cada tick, depois dos eventos, sem esperar o quantum acabar.
+        # Prontas e executando disputam CPU; preserva quem executava para o desempate.
         candidatas = []
         for tarefa in novo_estado.tarefas:
             if tarefa.estado_tarefa in (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO):
@@ -217,14 +220,21 @@ class Simulacao:
                 })
 
         for tarefa in novo_estado.tarefas:
+            # A fatia pertence à tarefa enquanto executa sem interrupção,
+            # mesmo se o despacho a migrar para outra CPU.
+            if tarefa.estado_tarefa != EstadoTarefa.EXECUTANDO:
+                tarefa.tempo_exec_quantum = 0
             if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO:
                 tarefa.tempo_exec_instancia += 1
+                if novo_estado.quantum > 0:
+                    tarefa.tempo_exec_quantum += 1
                 # Preserva quem executou neste intervalo, mesmo após liberar a CPU.
                 novo_estado.eventos.append({
                     'tipo': 'execucao', 'tick': t,
                     'id_tarefa': tarefa.id, 'id_cpu': tarefa.id_cpu_atual
                 })
                 if tarefa.tempo_exec_instancia >= tarefa.duracao:
+                    tarefa.tempo_exec_quantum = 0
                     tarefa.instancias_concluidas += 1
                     if tarefa.instancias_concluidas >= 10:
                         tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
@@ -238,6 +248,14 @@ class Simulacao:
                         'tipo': 'conclusao', 'tick': t + 1,
                         'id_tarefa': tarefa.id, 'instancia': tarefa.instancias_concluidas
                     })
+                elif novo_estado.quantum > 0 and tarefa.tempo_exec_quantum >= novo_estado.quantum:
+                    novo_estado.eventos.append({
+                        'tipo': 'fim_quantum', 'tick': t + 1,
+                        'id_tarefa': tarefa.id, 'id_cpu': tarefa.id_cpu_atual
+                    })
+                    tarefa.tempo_exec_quantum = 0
+                    # Não bloqueia nem apaga quem executava: no próximo tick,
+                    # no mesmo instante t+1, RM/EDF reavaliam todas as candidatas.
 
         # Verifica o prazo após as conclusões: terminar exatamente no limite é válido.
         # Prontas e suspensas também podem perder prazo, mesmo sem receber CPU.

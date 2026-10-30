@@ -25,7 +25,7 @@ O ambiente `.venv-windows` fica separado de uma eventual `.venv` criada em outro
 
 O exemplo inclui duas CPUs, três tarefas e quantum 3. A janela permite carregar outro arquivo, navegar pelo histórico, executar até o fim e editar uma tarefa pela API do motor. O Gantt é desenhado com QtWidgets/Graphics View, sem QML ou biblioteca de gráficos adicional.
 
-Para testar, incluindo a interface em modo offscreen:
+Os testes ficam em `test/`. Execute a partir da raiz, incluindo a interface em modo offscreen:
 
 ```powershell
 .\.venv-windows\Scripts\python.exe -B -m unittest discover -v
@@ -100,7 +100,9 @@ simulador_so/
 ├── engine.py       # Motor da simulação: avanço/retrocesso de ticks e despacho
 ├── parser.py       # Leitura e validação do arquivo de entrada (.txt)
 ├── gui.py          # Interface PySide6/QtWidgets com Gantt e inspeção do estado
-└── exporter.py     # Planejado: exportador do gráfico de Gantt completo
+├── requirements.txt # Dependência gráfica
+├── exemplos/       # Configuração para experimentar a interface
+└── test/           # Testes unittest do motor, parser e interface
 ````
 
 ## 6. Formato do Arquivo de Configuração

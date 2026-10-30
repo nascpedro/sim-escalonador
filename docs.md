@@ -19,7 +19,7 @@ Este documento registra as decisões de implementação e as limitações aceita
 | `engine.py` | Processar ticks, executar tarefas, administrar CPUs, registrar eventos, navegar pelo histórico e aplicar edições. |
 | `parser.py` | Carregar o arquivo de configuração e devolver estado inicial, algoritmo e avisos. |
 | `gui.py` | Janela PySide6/QtWidgets, tabela, edição, controles e Gantt a partir dos snapshots. |
-| `test_*.py` | Verificar os comportamentos implementados. |
+| `test/test_*.py` | Verificar os comportamentos implementados. `test/__init__.py` permite descobrir a suíte a partir da raiz. |
 
 A primeira interface e o Gantt estão implementados com **PySide6/QtWidgets** em `gui.py`. Não usam QML nem biblioteca adicional de gráficos. `exporter.py` continua planejado; a exportação e o empacotamento não foram implementados. `requirements.txt` registra a versão de PySide6 exercitada no ambiente de desenvolvimento.
 
@@ -135,7 +135,7 @@ Campos disponíveis: `ingresso`, `duracao`, `periodo`, `prazo`, `cor` e `estado_
 
 ## 10. Verificação e próximos passos
 
-Executar a suíte local com:
+Os testes estão no diretório `test/`. Executar a suíte local a partir da raiz com:
 
 ```bash
 python -B -m unittest discover -q

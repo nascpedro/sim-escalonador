@@ -3,9 +3,35 @@
 
 Simulador de escalonamento preemptivo multiprocessador com foco em sistemas de tempo real periódicos (Rate Monotonic e Earliest Deadline First), com suporte a múltiplos núcleos e controle de avançar e retroceder a simulação (time-travel debugging).
 
-Decisões, convenções e limitações atuais: [docs.md](docs.md). O que falta implementar: [PENDENCIAS.md](PENDENCIAS.md). A estrutura de interface apresentada abaixo ainda é uma proposta.
+Decisões, convenções e limitações atuais: [docs.md](docs.md). O que falta implementar: [PENDENCIAS.md](PENDENCIAS.md). A primeira interface PySide6 está em `gui.py`; a exportação ainda é planejada.
 
 ---
+
+## Executar a interface (Windows)
+
+Na raiz do projeto, prepare um ambiente de desenvolvimento com Python 3.11 e `uv`:
+
+```powershell
+uv venv --python 3.11 .venv-windows
+uv pip install --python .venv-windows/Scripts/python.exe -r requirements.txt
+.\.venv-windows\Scripts\python.exe gui.py
+```
+
+O ambiente `.venv-windows` fica separado de uma eventual `.venv` criada em outro sistema. Para abrir o exemplo diretamente:
+
+```powershell
+.\.venv-windows\Scripts\python.exe gui.py exemplos/configuracao.txt
+```
+
+O exemplo inclui duas CPUs, três tarefas e quantum 3. A janela permite carregar outro arquivo, navegar pelo histórico, executar até o fim e editar uma tarefa pela API do motor. O Gantt é desenhado com QtWidgets/Graphics View, sem QML ou biblioteca de gráficos adicional.
+
+Para testar, incluindo a interface em modo offscreen:
+
+```powershell
+.\.venv-windows\Scripts\python.exe -B -m unittest discover -v
+```
+
+Esses comandos são para **desenvolvimento**. A distribuição sem instalar Python/bibliotecas no computador de destino e a exportação integral da imagem ainda estão pendentes.
 
 ## 1. Como a Simulação Funciona: O Ciclo do Tick `[t, t+1)`
 
@@ -73,8 +99,8 @@ simulador_so/
 ├── scheduler.py    # Algoritmos RM e EDF + regras em cascata de desempate
 ├── engine.py       # Motor da simulação: avanço/retrocesso de ticks e despacho
 ├── parser.py       # Leitura e validação do arquivo de entrada (.txt)
-├── gui.py          # Interface gráfica Tkinter com Gantt e painel de depuração
-└── exporter.py     # Exportador do gráfico de Gantt completo para SVG
+├── gui.py          # Interface PySide6/QtWidgets com Gantt e inspeção do estado
+└── exporter.py     # Planejado: exportador do gráfico de Gantt completo
 ````
 
 ## 6. Formato do Arquivo de Configuração

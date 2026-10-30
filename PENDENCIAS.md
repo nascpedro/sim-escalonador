@@ -32,4 +32,9 @@ Este arquivo acompanha o escopo; item em aberto não significa requisito atendid
 
 ## Ainda fora desta rodada
 
-Interface de controle/edição, Gantt com legenda e eventos, exportação integral da imagem e distribuição sem instalação de runtime. Apenas Projeto A.
+- [x] Primeira interface PySide6: abrir arquivo, mostrar tarefas/avisos, avançar/retroceder, editar tarefa selecionada e executar até o fim em lotes Qt, sem alterar regras do motor.
+- [x] Primeiro Gantt: rolagem/zoom, ordem dos IDs, CPU nos blocos, suspensão hachurada, CPUs desligadas, legenda e marcadores dos eventos existentes. Retrocesso mostra somente o histórico até o instante selecionado.
+- [ ] Exportação integral da imagem (não apenas captura da janela).
+- [ ] Distribuição sem instalação de runtime e teste fora do ambiente de desenvolvimento. O ambiente `.venv-windows` e `requirements.txt` são recursos de desenvolvimento, não uma entrega empacotada.
+
+Apenas Projeto A. Reavaliar a interface com os casos da demonstração antes de afirmar atendimento integral do enunciado.

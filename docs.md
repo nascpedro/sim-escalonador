@@ -18,9 +18,10 @@ Este documento registra as decisões de implementação e as limitações aceita
 | `scheduler.py` | Ordenar candidatas por RM ou EDF e aplicar os desempates. Não executa ticks nem desenha a interface. |
 | `engine.py` | Processar ticks, executar tarefas, administrar CPUs, registrar eventos, navegar pelo histórico e aplicar edições. |
 | `parser.py` | Carregar o arquivo de configuração e devolver estado inicial, algoritmo e avisos. |
+| `gui.py` | Janela PySide6/QtWidgets, tabela, edição, controles e Gantt a partir dos snapshots. |
 | `test_*.py` | Verificar os comportamentos implementados. |
 
-A interface, o Gantt e a exportação ainda não foram implementados. Referências a `gui.py` ou `exporter.py` na organização proposta do README não significam que esses arquivos já existam. A biblioteca gráfica ainda não foi escolhida.
+A primeira interface e o Gantt estão implementados com **PySide6/QtWidgets** em `gui.py`. Não usam QML nem biblioteca adicional de gráficos. `exporter.py` continua planejado; a exportação e o empacotamento não foram implementados. `requirements.txt` registra a versão de PySide6 exercitada no ambiente de desenvolvimento.
 
 ## 3. Tarefas, CPUs e histórico
 
@@ -119,16 +120,17 @@ Campos disponíveis: `ingresso`, `duracao`, `periodo`, `prazo`, `cor` e `estado_
 - Alterar período orienta as próximas ativações, sem reiniciar a ocorrência atual. Alterar ingresso não pode colocá-lo depois da ativação de uma ocorrência ainda em curso.
 - Finalizada corresponde às dez ocorrências efetivamente concluídas pelo motor; não é um atalho para fabricar conclusões.
 
-## 9. Eventos e visualização futura
+## 9. Interface e visualização
 
 - Cada snapshot guarda os eventos do intervalo que o produziu, não uma cópia cumulativa de todo o log.
 - Os eventos têm timestamp próprio: execução/decisão em `t` e conclusão/fim de quantum em `t+1` podem estar no mesmo snapshot.
 - O registro de execução preserva qual CPU executou a tarefa, mesmo quando a conclusão libera a CPU ao final do intervalo.
-- A interface deverá ler o motor e seu histórico, sem reimplementar as regras de RM/EDF ou alterar TCBs diretamente.
-- Começar com abrir arquivo, mostrar avisos e tarefas, avançar/retroceder e um Gantt simples. Integrar os demais controles em etapas.
-- Incluir legenda e identificação de CPU e estados, além dos eventos relevantes exigidos pelo enunciado.
+- A interface lê o motor e seu histórico, sem reimplementar RM/EDF ou alterar TCBs diretamente. Erros de carregamento preservam a simulação anterior e aparecem na janela.
+- A janela permite abrir arquivo, consultar tabela e avisos, avançar/retroceder, editar a tarefa selecionada e executar até o fim. Edição usa somente os campos alterados pela API do motor e mantém erros no diálogo.
+- O Gantt usa `QGraphicsScene`/`QGraphicsView`, com rolagem e zoom, IDs numéricos decrescentes, CPU nos blocos, suspensão preta hachurada, trilhas de CPU desligada, legenda e marcadores com timestamps/tooltips. Mostra somente o prefixo do histórico até o instante selecionado; retroceder não exibe o futuro salvo.
+- Execução completa usa `QTimer` e lotes pequenos de chamadas a `avancar()` para devolver controle à janela. Os lotes não limitam a duração total da simulação. Os controles de alteração ficam desabilitados durante a execução e o Gantt é redesenhado ao final; fechar a janela interrompe o timer. A UI mantém as mesmas condições de parada e bloqueio da execução completa do motor.
 - Exportar o gráfico completo a partir dos dados/desenho, não capturar somente a parte visível da janela.
-- A escolha da biblioteca gráfica e do formato de exportação permanece em aberto. A menção a Tkinter/SVG no README é uma proposta anterior, não uma restrição já confirmada.
+- A biblioteca aceita é PySide6. O formato e a implementação da exportação integral ainda precisam ser definidos; a menção anterior a Tkinter no README foi substituída.
 - A entrega deve executar sem exigir que o destinatário instale Python ou bibliotecas. O empacotamento ainda precisa ser implementado e testado fora do ambiente de desenvolvimento.
 
 ## 10. Verificação e próximos passos
@@ -139,4 +141,6 @@ Executar a suíte local com:
 python -B -m unittest discover -q
 ```
 
-Próximo foco: escolher a biblioteca gráfica e construir uma interface mínima ligada ao motor. Manter sobreposição de ocorrências e valores padrão como questões abertas. Depois completar eventos/legenda, exportação integral e distribuição. Não adicionar recursos opcionais antes de obter esse fluxo funcional.
+Para exercitar também os testes da interface, usar o Python do ambiente com PySide6 (`.venv-windows/Scripts/python.exe` no Windows). Em interpretadores sem PySide6, os testes gráficos são ignorados e os testes do motor continuam disponíveis. Comandos de instalação e execução estão no README; `exemplos/configuracao.txt` permite testar o fluxo com duas CPUs e três tarefas.
+
+Próximo foco: avaliar a primeira interface com casos de uso e implementar a exportação integral e a distribuição. Manter sobreposição de ocorrências e valores padrão como questões abertas. Não adicionar recursos opcionais antes de concluir esse fluxo.

@@ -30,6 +30,25 @@ snapshots posteriores; rejeições e configuração global sem mudanças preserv
 Algoritmo, quantum e CPUs pertencem ao snapshot. O desenho lê somente o prefixo
 selecionado; zoom não avança ticks e exportação não altera a simulação.
 
+## Organização para leitura e apresentação
+
+O motor tem seções para navegação/histórico, intervenções manuais, ciclo do tick
+e operações de ocorrências/CPUs. O ciclo continua com quatro etapas explícitas;
+execução, conclusão e fim de quantum possuem operações com nomes do domínio.
+Uma função genérica de troca de estado esconderia efeitos sobre CPU, progresso
+e fila, por isso não foi introduzida.
+
+A edição valida campos e prepara uma cópia da tarefa, ajusta ocorrência/fila,
+verifica disponibilidade de CPU e só então aplica. `_substituir_estado_atual`
+concentra a atualização do histórico. A consulta `estado_atual` evita repetir
+índices na interface. `concluida` e `pode_continuar_execucao` concentram término
+e impedimentos, mantendo o avanço manual de um tick independente dessa regra.
+
+`validacao.py` compartilha regras de inteiro, RGB e algoritmo. Conversão de texto
+e contexto dos erros pertencem ao parser/formulário. O parser expõe uma leitura
+sequencial: registros → cabeçalho → tarefas → estado inicial. A reserva de valores
+explícitos anteriores às sugestões continua necessária.
+
 ## Escalonamento e quantum
 
 A fila de candidatas é global e temporária, com tarefas prontas ou executando.

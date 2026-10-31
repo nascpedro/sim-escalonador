@@ -1,10 +1,22 @@
+"""Motor do Projeto A: histórico, intervenções manuais e evolução por ticks.
+
+O snapshot t antecede [t, t+1). Um tick copia o estado, ativa ocorrências,
+despacha, executa uma unidade e verifica prazos. A ordem é parte do modelo:
+concluir exatamente no prazo é válido. O motor não conhece a interface.
+"""
+import copy
+
 from models import Cpu, EstadoSimulacao, EstadoTarefa, Ocorrencia, TCB, normalizar_id
 import padroes
 from scheduler import escalonar
-import copy
-import re
+from validacao import normalizar_cor, validar_algoritmo, validar_inteiro
+
+ESTADOS_ATIVOS = (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO, EstadoTarefa.SUSPENSA)
+
 
 class Simulacao:
+    # Navegação e histórico
+
     def __init__(self, estado_inicial: EstadoSimulacao, algoritmo: str):
         estado_inicial.algoritmo = algoritmo.upper()
         # O histórico guarda cada estado da simulação
@@ -12,10 +24,17 @@ class Simulacao:
         self.instante_atual = 0 # aponta para o instante de tempo atual da simulação
 
     @property
+    def estado_atual(self):
+        """Snapshot apontado pela navegação, que pode ter um futuro já calculado."""
+        return self.historico[self.instante_atual]
+
+    @property
     def algoritmo(self):
-        return self.historico[self.instante_atual].algoritmo or self.historico[0].algoritmo
+        return self.estado_atual.algoritmo or self.historico[0].algoritmo
 
-
+    @property
+    def concluida(self):
+        return all(t.estado_tarefa == EstadoTarefa.FINALIZADA for t in self.estado_atual.tarefas)
 
     def avancar(self, passos: int = 1) -> None:
         for _ in range(passos):
@@ -24,51 +43,50 @@ class Simulacao:
                 self.instante_atual += 1
             else:
                 # Calcula o próximo tick [t, t+1)
-                novo_estado = self._executar_um_tick(self.historico[self.instante_atual])
+                novo_estado = self._executar_um_tick(self.estado_atual)
                 self.historico.append(novo_estado)
                 self.instante_atual += 1
-
-    def executar_completa(self) -> EstadoSimulacao:
-        # Executa até todas as tarefas estarem FINALIZADA, sem limite de passos.
-        while True:
-            estado = self.historico[self.instante_atual]
-            pendentes = []
-            for tarefa in estado.tarefas:
-                if tarefa.estado_tarefa != EstadoTarefa.FINALIZADA:
-                    pendentes.append(tarefa)
-
-            # Retorna assim que não houver tarefas pendentes, sem criar ticks extras.
-            if not pendentes:
-                return estado
-
-            if not estado.cpus:
-                raise RuntimeError("Execução completa interrompida: há tarefas pendentes, mas nenhuma CPU.")
-            for tarefa in pendentes:
-                # O motor atual não possui evento automático para retirar a suspensão.
-                if tarefa.estado_tarefa == EstadoTarefa.SUSPENSA:
-                    raise RuntimeError(
-                        f"Execução completa interrompida: tarefa {tarefa.id} suspensa. "
-                        "Altere seu estado manualmente antes de continuar."
-                    )
-
-
-            # Reutiliza o histórico quando existe; calcula um novo tick apenas no fim.
-            self.avancar()
 
     def retroceder(self, passos: int = 1) -> None:
         # Retrocede simulação com base no histórico
         self.instante_atual = max(0, self.instante_atual - passos)
 
+    def executar_completa(self) -> EstadoSimulacao:
+        """Avança até dez conclusões por tarefa, reutilizando o futuro quando existe."""
+        while self.pode_continuar_execucao():
+            self.avancar()
+        return self.estado_atual
+
+    def pode_continuar_execucao(self):
+        """Retorna False no término; explica impedimentos sem avançar o relógio.
+
+        Compartilhada pela CLI e pelos lotes da GUI. Avanço manual de um tick
+        continua permitido mesmo com tarefa suspensa.
+        """
+        if self.concluida:
+            return False
+        if not self.estado_atual.cpus:
+            raise RuntimeError('Execução completa interrompida: há tarefas pendentes, mas nenhuma CPU.')
+        for tarefa in self.estado_atual.tarefas:
+            if tarefa.estado_tarefa == EstadoTarefa.SUSPENSA:
+                raise RuntimeError(
+                    f'Execução completa interrompida: tarefa {tarefa.id} suspensa. '
+                    'Altere seu estado manualmente antes de continuar.')
+        return True
+
+    def _substituir_estado_atual(self, estado):
+        """Uma intervenção aceita preserva o passado e invalida somente o futuro."""
+        self.historico[self.instante_atual] = estado
+        del self.historico[self.instante_atual + 1:]
+
+    # Intervenções manuais: validar antes de aplicar
+
     def configurar_sistema(self, algoritmo, quantum, quantidade_cpus):
         """Valida tudo antes de substituir o snapshot; retorna se houve mudança."""
-        if not isinstance(algoritmo, str) or algoritmo.upper() not in ('RM', 'EDF'):
-            raise ValueError('algoritmo deve ser RM ou EDF.')
-        if type(quantum) is not int or quantum < 0:
-            raise ValueError('quantum deve ser inteiro maior ou igual a zero.')
-        if type(quantidade_cpus) is not int or quantidade_cpus < 1:
-            raise ValueError('quantidade de CPUs deve ser inteiro maior ou igual a um.')
-        algoritmo = algoritmo.upper()
-        anterior = self.historico[self.instante_atual]
+        algoritmo = validar_algoritmo(algoritmo)
+        validar_inteiro(quantum, 'quantum', 0)
+        validar_inteiro(quantidade_cpus, 'quantidade de CPUs', 1)
+        anterior = self.estado_atual
         if (algoritmo, quantum, quantidade_cpus) == (self.algoritmo, anterior.quantum, len(anterior.cpus)):
             return False
         novo = copy.deepcopy(anterior)
@@ -88,8 +106,7 @@ class Simulacao:
                 tarefa.estado_tarefa = EstadoTarefa.PRONTA
                 tarefa.id_cpu_atual = None
                 tarefa.tempo_exec_quantum = 0
-        self.historico[self.instante_atual] = novo
-        del self.historico[self.instante_atual + 1:]
+        self._substituir_estado_atual(novo)
         return True
 
     def sugerir_tarefa(self):
@@ -109,62 +126,61 @@ class Simulacao:
             raise ValueError('ID já utilizado neste histórico; escolha outro.')
         for nome, valor, minimo in (('ingresso', ingresso, estados[-1].tick),
                 ('duracao', duracao, 1), ('periodo', periodo, 1), ('prazo', prazo, 1)):
-            if type(valor) is not int or valor < minimo:
-                raise ValueError(f'{nome} deve ser inteiro maior ou igual a {minimo}.')
-        if not isinstance(cor, str) or not re.fullmatch(r'#?[0-9a-fA-F]{6}', cor):
-            raise ValueError('cor deve ser RGB hexadecimal de seis dígitos.')
-        cor = '#' + cor.lstrip('#').upper()
+            validar_inteiro(valor, nome, minimo)
+        cor = normalizar_cor(cor)
         if any(t.cor.lstrip('#').upper() == cor[1:] for t in estados[-1].tarefas):
             raise ValueError('cor já utilizada por outra tarefa.')
         novo = copy.deepcopy(estados[-1])
         novo.tarefas.append(TCB(id_tarefa, cor, ingresso, duracao, periodo, prazo))
         novo.eventos.append(dict(tipo='inclusao', tick=novo.tick, id_tarefa=id_tarefa, cor=cor))
-        self.historico[self.instante_atual] = novo
-        del self.historico[self.instante_atual + 1:]
+        self._substituir_estado_atual(novo)
 
     def remover_tarefa(self, id_tarefa):
         """Remove também ocorrências pendentes e libera a CPU, preservando o passado."""
-        anterior = self.historico[self.instante_atual]
-        tarefa = next((t for t in anterior.tarefas if t.id == id_tarefa), None)
-        if tarefa is None:
-            raise ValueError(f'Tarefa {id_tarefa!r} não encontrada.')
+        anterior = self.estado_atual
+        tarefa = anterior.tarefas[self._indice_tarefa(id_tarefa)]
         novo = copy.deepcopy(anterior)
         novo.tarefas = [t for t in novo.tarefas if t.id != id_tarefa]
-        for cpu in novo.cpus:
-            if cpu.id_tarefa_alocada == id_tarefa:
-                cpu.id_tarefa_alocada = None
+        self._liberar_cpu(novo, id_tarefa)
         novo.eventos.append(dict(tipo='remocao', tick=novo.tick, id_tarefa=id_tarefa, cor=tarefa.cor))
-        self.historico[self.instante_atual] = novo
-        del self.historico[self.instante_atual + 1:]
+        self._substituir_estado_atual(novo)
 
     def modificar_tarefa_em_execucao(self, id_tarefa: int | str, **alteracoes) -> None:
-        """Edita ingresso, duracao, periodo, prazo, cor ou estado_tarefa.
+        """Prepara e valida numa cópia; só então aplica e descarta o futuro.
 
-        Exemplo: modificar_tarefa_em_execucao(1, duracao=4).
-        CPU, progresso, contadores e prazo absoluto são administrados pelo motor.
-        PRONTA e SUSPENSA preservam uma ocorrência ativa; AGUARDANDO a abandona.
-        Rejeições preservam o histórico; aceitação descarta somente o futuro.
+        CPU, progresso e contadores pertencem ao motor. PRONTA e SUSPENSA
+        preservam a ocorrência; AGUARDANDO abandona a ocorrência e sua fila.
         """
-        estado = self.historico[self.instante_atual]
-        indice = None
-        for i, tarefa in enumerate(estado.tarefas):
-            if tarefa.id == id_tarefa:
-                indice = i
-                break
-        if indice is None:
-            raise ValueError(f"Tarefa {id_tarefa!r} não encontrada.")
+        indice = self._indice_tarefa(id_tarefa)
         if not alteracoes:
             return
+        self._validar_campos_tarefa(id_tarefa, alteracoes)
+        anterior = self.estado_atual.tarefas[indice]
+        nova = copy.deepcopy(anterior)
+        for campo, valor in alteracoes.items():
+            setattr(nova, campo, valor)
+        self._ajustar_ocorrencia_editada(anterior, nova)
+        cpu = self._selecionar_cpu_manual(nova)
+        nova.id_cpu_atual = cpu.id_cpu if cpu is not None else None
+        if anterior.estado_tarefa != EstadoTarefa.EXECUTANDO or nova.estado_tarefa != EstadoTarefa.EXECUTANDO:
+            nova.tempo_exec_quantum = 0
+        self._aplicar_edicao_tarefa(indice, nova, cpu)
 
+    def _indice_tarefa(self, id_tarefa):
+        for indice, tarefa in enumerate(self.estado_atual.tarefas):
+            if tarefa.id == id_tarefa:
+                return indice
+        raise ValueError(f'Tarefa {id_tarefa!r} não encontrada.')
+
+    def _validar_campos_tarefa(self, id_tarefa, alteracoes):
+        estado = self.estado_atual
         # Valida apenas a entrada da edição, não a estrutura inteira do TCB.
         limites = {'ingresso': 0, 'duracao': 1, 'periodo': 1, 'prazo': 1}
         for campo, valor in alteracoes.items():
             if campo in limites:
-                if type(valor) is not int or valor < limites[campo]:
-                    raise ValueError(f"{campo} deve ser inteiro maior ou igual a {limites[campo]}.")
+                validar_inteiro(valor, campo, limites[campo])
             elif campo == 'cor':
-                if not isinstance(valor, str) or not re.fullmatch(r'#?[0-9a-fA-F]{6}', valor):
-                    raise ValueError("cor deve ser RGB hexadecimal de seis dígitos.")
+                normalizar_cor(valor)
                 for outra in estado.tarefas:
                     if outra.id != id_tarefa and outra.cor.lstrip('#').upper() == valor.lstrip('#').upper():
                         raise ValueError("cor já utilizada por outra tarefa.")
@@ -174,19 +190,16 @@ class Simulacao:
             else:
                 raise ValueError(f"{campo} não é um campo editável.")
 
-        nova = copy.deepcopy(estado.tarefas[indice])
-        for campo, valor in alteracoes.items():
-            setattr(nova, campo, valor)
-
-        anterior = estado.tarefas[indice]
-        ativos = (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO, EstadoTarefa.SUSPENSA)
+    def _ajustar_ocorrencia_editada(self, anterior, nova):
+        """Recalcula a ocorrência e sua fila numa cópia, antes de aceitar a edição."""
+        estado = self.estado_atual
         if nova.estado_tarefa == EstadoTarefa.FINALIZADA and nova.instancias_concluidas < 10:
             raise ValueError("FINALIZADA exige dez ocorrências concluídas.")
         if nova.instancias_concluidas == 10 and nova.estado_tarefa != EstadoTarefa.FINALIZADA:
             raise ValueError("Após dez ocorrências, a tarefa não pode ser reativada.")
-        if nova.estado_tarefa in ativos:
+        if nova.estado_tarefa in ESTADOS_ATIVOS:
             ativacao = anterior.prazo_absoluto - anterior.prazo
-            if anterior.estado_tarefa not in ativos:
+            if anterior.estado_tarefa not in ESTADOS_ATIVOS:
                 # Entrar manualmente em PRONTA/EXECUTANDO/SUSPENSA inicia uma ocorrência agora.
                 ativacao = estado.tick
                 nova.tempo_exec_instancia = 0
@@ -198,7 +211,7 @@ class Simulacao:
             nova.prazo_absoluto = ativacao + nova.prazo
         elif anterior.instancias_concluidas == 0:
             nova.prazo_absoluto = nova.ingresso + nova.prazo
-        if nova.estado_tarefa == EstadoTarefa.AGUARDANDO and anterior.estado_tarefa in ativos:
+        if nova.estado_tarefa == EstadoTarefa.AGUARDANDO and anterior.estado_tarefa in ESTADOS_ATIVOS:
             # Abandona a ocorrência e sua fila, sem fabricar conclusões.
             nova.tempo_exec_instancia = 0
             nova.perdeu_prazo = False
@@ -213,29 +226,31 @@ class Simulacao:
             # Se o novo prazo já venceu, o próximo tick registra a perda no histórico.
             nova.perdeu_prazo = False
 
+    def _selecionar_cpu_manual(self, nova):
+        estado = self.estado_atual
         # EXECUTANDO mantém a CPU atual ou usa uma livre, sem migração manual.
         escolhida = None
         if nova.estado_tarefa == EstadoTarefa.EXECUTANDO:
             for cpu in estado.cpus:
-                if cpu.id_tarefa_alocada == id_tarefa:
+                if cpu.id_tarefa_alocada == nova.id:
                     escolhida = cpu
                     break
                 if cpu.id_tarefa_alocada is None and escolhida is None:
                     escolhida = cpu
             if escolhida is None:
                 raise ValueError("Não há CPU livre para colocar a tarefa em EXECUTANDO.")
-        nova.id_cpu_atual = escolhida.id_cpu if escolhida is not None else None
-        if anterior.estado_tarefa != EstadoTarefa.EXECUTANDO or nova.estado_tarefa != EstadoTarefa.EXECUTANDO:
-            nova.tempo_exec_quantum = 0
+        return escolhida
 
-        # Todas as verificações terminaram. Só agora altera o estado e descarta o futuro.
-        for cpu in estado.cpus:
-            if cpu.id_tarefa_alocada == id_tarefa:
-                cpu.id_tarefa_alocada = None
-        if escolhida is not None:
-            escolhida.id_tarefa_alocada = id_tarefa
+    def _aplicar_edicao_tarefa(self, indice, nova, cpu):
+        """Todas as verificações terminaram; agora pode alterar o snapshot selecionado."""
+        estado = self.estado_atual
+        self._liberar_cpu(estado, nova.id)
+        if cpu is not None:
+            cpu.id_tarefa_alocada = nova.id
         estado.tarefas[indice] = nova
-        del self.historico[self.instante_atual + 1:]
+        self._substituir_estado_atual(estado)
+
+    # Ciclo automático do tick
 
     def _executar_um_tick(self, estado_ant: EstadoSimulacao) -> EstadoSimulacao:
         """Um tick: copiar → ativar → escalonar/despachar → executar → verificar."""
@@ -247,15 +262,6 @@ class Simulacao:
         self._verificar_prazos(estado)
         estado.tick += 1
         return estado
-
-    def _iniciar_ocorrencia(self, tarefa, ocorrencia):
-        # O prazo conta da ativação original, mesmo após esperar na fila.
-        tarefa.estado_tarefa = EstadoTarefa.PRONTA
-        tarefa.tempo_exec_instancia = 0
-        tarefa.tempo_exec_quantum = 0
-        tarefa.prazo_absoluto = ocorrencia.prazo_absoluto
-        tarefa.perdeu_prazo = ocorrencia.perdeu_prazo
-        tarefa.id_cpu_atual = None
 
     def _ativar_tarefas(self, estado):
         t = estado.tick
@@ -313,36 +319,16 @@ class Simulacao:
             if tarefa.estado_tarefa != EstadoTarefa.EXECUTANDO:
                 tarefa.tempo_exec_quantum = 0
                 continue
-            tarefa.tempo_exec_instancia += 1
-            if estado.quantum > 0:
-                tarefa.tempo_exec_quantum += 1
-            estado.eventos.append(dict(tipo='execucao', tick=t,
-                                      id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+            self._executar_uma_unidade(estado, tarefa)
             if tarefa.tempo_exec_instancia >= tarefa.duracao:
-                tarefa.instancias_concluidas += 1
-                tarefa.tempo_exec_quantum = 0
-                estado.eventos.append(dict(tipo='conclusao', tick=t + 1,
-                    id_tarefa=tarefa.id, instancia=tarefa.instancias_concluidas))
-                for cpu in estado.cpus:
-                    if cpu.id_tarefa_alocada == tarefa.id:
-                        cpu.id_tarefa_alocada = None
-                tarefa.id_cpu_atual = None
-                if tarefa.instancias_concluidas == 10:
-                    tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
-                elif tarefa.ocorrencias_pendentes:
-                    self._iniciar_ocorrencia(tarefa, tarefa.ocorrencias_pendentes.pop(0))
-                else:
-                    tarefa.estado_tarefa = EstadoTarefa.AGUARDANDO
+                self._concluir_ocorrencia(estado, tarefa)
             elif estado.quantum > 0 and tarefa.tempo_exec_quantum >= estado.quantum:
-                estado.eventos.append(dict(tipo='fim_quantum', tick=t + 1,
-                    id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
-                # Reavaliar no próximo tick; expirar a fatia não exige rodízio.
-                tarefa.tempo_exec_quantum = 0
+                self._registrar_fim_quantum(estado, tarefa)
 
     def _verificar_prazos(self, estado):
         # Conclusões já foram processadas: terminar exatamente no prazo é válido.
         for tarefa in estado.tarefas:
-            if tarefa.estado_tarefa in (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO, EstadoTarefa.SUSPENSA):
+            if tarefa.estado_tarefa in ESTADOS_ATIVOS:
                 if estado.tick + 1 >= tarefa.prazo_absoluto and not tarefa.perdeu_prazo:
                     tarefa.perdeu_prazo = True
                     estado.eventos.append(dict(tipo='perda_prazo', tick=estado.tick + 1,
@@ -353,3 +339,48 @@ class Simulacao:
                     ocorrencia.perdeu_prazo = True
                     estado.eventos.append(dict(tipo='perda_prazo', tick=estado.tick + 1,
                         id_tarefa=tarefa.id, ativacao=ocorrencia.ativacao))
+
+    # Operações das ocorrências e das CPUs
+
+    def _iniciar_ocorrencia(self, tarefa, ocorrencia):
+        # O prazo conta da ativação original, mesmo após esperar na fila.
+        tarefa.estado_tarefa = EstadoTarefa.PRONTA
+        tarefa.tempo_exec_instancia = 0
+        tarefa.tempo_exec_quantum = 0
+        tarefa.prazo_absoluto = ocorrencia.prazo_absoluto
+        tarefa.perdeu_prazo = ocorrencia.perdeu_prazo
+        tarefa.id_cpu_atual = None
+
+    def _executar_uma_unidade(self, estado, tarefa):
+        """Consome um tick e registra a CPU que executou, antes de liberá-la."""
+        tarefa.tempo_exec_instancia += 1
+        if estado.quantum > 0:
+            tarefa.tempo_exec_quantum += 1
+        estado.eventos.append(dict(tipo='execucao', tick=estado.tick,
+                                  id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+
+    def _concluir_ocorrencia(self, estado, tarefa):
+        """Conta a conclusão, libera CPU e promove a próxima ocorrência em FIFO."""
+        tarefa.instancias_concluidas += 1
+        tarefa.tempo_exec_quantum = 0
+        estado.eventos.append(dict(tipo='conclusao', tick=estado.tick + 1,
+            id_tarefa=tarefa.id, instancia=tarefa.instancias_concluidas))
+        self._liberar_cpu(estado, tarefa.id)
+        tarefa.id_cpu_atual = None
+        if tarefa.instancias_concluidas == 10:
+            tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
+        elif tarefa.ocorrencias_pendentes:
+            self._iniciar_ocorrencia(tarefa, tarefa.ocorrencias_pendentes.pop(0))
+        else:
+            tarefa.estado_tarefa = EstadoTarefa.AGUARDANDO
+
+    def _registrar_fim_quantum(self, estado, tarefa):
+        estado.eventos.append(dict(tipo='fim_quantum', tick=estado.tick + 1,
+            id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+        # Reavaliar no próximo tick; expirar a fatia não exige rodízio.
+        tarefa.tempo_exec_quantum = 0
+
+    def _liberar_cpu(self, estado, id_tarefa):
+        for cpu in estado.cpus:
+            if cpu.id_tarefa_alocada == id_tarefa:
+                cpu.id_tarefa_alocada = None

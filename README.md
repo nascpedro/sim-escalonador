@@ -75,6 +75,7 @@ são reservados antes de gerar sugestões.
 | `models.py` | Dados de tarefa, ocorrência, CPU e snapshot. |
 | `scheduler.py` | Ordenação RM/EDF e desempates. |
 | `engine.py` | Ativar, despachar, executar, verificar prazos e guardar histórico. |
+| `validacao.py` | Regras básicas de inteiros, cores RGB e algoritmo. |
 | `padroes.py` | Valores iniciais e sugestões de ID/cor disponíveis. |
 | `parser.py` | Converter o arquivo em estado inicial, algoritmo e avisos. |
 | `linha_tempo.py` | Converter o histórico selecionado em intervalos. |
@@ -86,11 +87,37 @@ CustomTkinter fornece os controles e a aparência; Tkinter fornece o Canvas;
 drawsvg escreve o SVG. O projeto posiciona os intervalos e os eventos. Não há
 Qt Designer, Matplotlib ou geração manual de XML na aplicação atual.
 
-O snapshot `t` antecede o intervalo `[t, t+1)`. Cada tick copia o estado, ativa
-ocorrências, escolhe tarefas, executa uma unidade e verifica conclusões/prazos.
+Para acompanhar o motor, comece por `_executar_um_tick` em `engine.py`:
+
+```text
+estado t → copiar → ativar → despachar → executar → verificar prazos → estado t+1
+```
+
+O snapshot `t` antecede o intervalo `[t, t+1)`. As quatro etapas têm funções
+próprias: `_ativar_tarefas`, `_despachar`, `_executar_tarefas` e `_verificar_prazos`.
+A execução chama operações menores: `_executar_uma_unidade`,
+`_concluir_ocorrencia` e `_registrar_fim_quantum`. `_iniciar_ocorrencia` também
+é usada ao promover uma ocorrência que esperava em FIFO.
+
 RM prioriza o menor período; EDF prioriza o menor prazo absoluto. Desempates:
 quem executava, prazo relativo, ingresso, duração e sorteio. Ocorrências da mesma
 tarefa esperam em FIFO e preservam seus prazos; somente uma executa por vez.
+
+O motor está dividido em quatro seções: navegação/histórico, intervenções
+manuais, ciclo automático e operações das ocorrências/CPUs. Para explicar uma
+edição, siga `modificar_tarefa_em_execucao`: validar campos → preparar a cópia →
+ajustar ocorrência e fila → verificar CPU → aplicar. Rejeições não chegam à
+etapa de aplicação. `_substituir_estado_atual` concentra o descarte do futuro.
+
+`concluida` consulta o término; `pode_continuar_execucao` explica impedimentos.
+A CLI e os lotes da interface usam essa mesma decisão. A GUI controla quando
+agendar outro lote, mantendo a janela responsiva.
+
+No parser, comece por `carregar_configuracao`: `_ler_registros` →
+`_ler_cabecalho` → `_ler_tarefas` → construir o estado inicial. `_ler_tarefas`
+reserva IDs/cores explícitos antes das sugestões e usa `_ler_tarefa` para cada
+registro. As regras básicas estão em `validacao.py`; o parser acrescenta o
+número da linha às mensagens de erro.
 
 ## Exemplos e verificação
 
@@ -110,12 +137,13 @@ Na CLI, a simulação é executada até o fim. O diretório de destino deve exis
 ## Documentação e entrega
 
 - [Decisões e convenções](docs/decisoes.md).
+- [Plano e verificação da refatoração](docs/refatoracao.md).
 - [Requisitos ainda pendentes](docs/pendencias.md).
 - [Empacotamento e validação Windows](docs/distribuicao.md).
 
 O enunciado local está em `referencias/simulador-escalonamento.md` e `.pdf`,
 preservado fora do versionamento. Os protótipos anteriores e a implementação Qt
-permanecem acessíveis no histórico Git (`94ace73`). Esta migração está na branch
-`codex/customtkinter-drawsvg`; a main ainda aponta para a versão anterior.
+permanecem acessíveis no histórico Git (`94ace73`). A versão organizada para entrega está na branch
+`entrega`, derivada de `codex/customtkinter-drawsvg`; a main permanece na versão anterior.
 
 **Ainda falta:** homologação em Windows limpo e ensaio dos exemplos pelo autor.

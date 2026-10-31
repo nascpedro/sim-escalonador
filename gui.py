@@ -71,23 +71,28 @@ class DialogoTarefa(tk.Toplevel):
             self.identificador.delete(0, 'end')
             self.identificador.insert(0, str(valores['id_tarefa']))
 
-    def salvar(self):
+    def _ler_alteracoes(self):
+        """Converte o formulário; o motor valida as consequências da alteração."""
         alteracoes = {}
+        for campo, entrada in self.campos.items():
+            texto = entrada.get().strip()
+            if campo == 'cor':
+                valor = '#' + texto.lstrip('#').upper()
+            else:
+                try:
+                    valor = int(texto)
+                except ValueError:
+                    raise ValueError(f'{campo} deve ser inteiro.') from None
+            if self.nova or valor != getattr(self.tarefa, campo):
+                alteracoes[campo] = valor
+        estado = EstadoTarefa[self.estado.get()]
+        if estado != self.tarefa.estado_tarefa:
+            alteracoes['estado_tarefa'] = estado
+        return alteracoes
+
+    def salvar(self):
         try:
-            for campo, entrada in self.campos.items():
-                texto = entrada.get().strip()
-                if campo == 'cor':
-                    valor = '#' + texto.lstrip('#').upper()
-                else:
-                    try:
-                        valor = int(texto)
-                    except ValueError:
-                        raise ValueError(f'{campo} deve ser inteiro.') from None
-                if self.nova or valor != getattr(self.tarefa, campo):
-                    alteracoes[campo] = valor
-            estado = EstadoTarefa[self.estado.get()]
-            if estado != self.tarefa.estado_tarefa:
-                alteracoes['estado_tarefa'] = estado
+            alteracoes = self._ler_alteracoes()
             if self.nova:
                 self.janela.simulacao.adicionar_tarefa(self.identificador.get(), **alteracoes)
             else:
@@ -128,6 +133,8 @@ class JanelaSimulador(ctk.CTk):
                                     wraplength=1100, justify='left')
         self.mensagem.grid(row=3, column=0, columnspan=2, padx=15, pady=10, sticky='ew')
         self.atualizar()
+
+    # Montagem dos controles
 
     def _montar_controles(self):
         self.resumo = ctk.CTkLabel(self, text='Projeto A', font=ctk.CTkFont(size=20, weight='bold'), anchor='w')
@@ -197,6 +204,8 @@ class JanelaSimulador(ctk.CTk):
         entrada.grid(row=linha+1, column=0, padx=12, pady=(0, 6), sticky='ew')
         return entrada
 
+    # Configuração e arquivos de entrada
+
     def nova(self):
         self.simulacao = Simulacao(EstadoSimulacao(0, [],
             [Cpu(i) for i in range(padroes.QUANTIDADE_CPUS)], padroes.QUANTUM), padroes.ALGORITMO)
@@ -245,6 +254,8 @@ class JanelaSimulador(ctk.CTk):
             f'Arquivo: {self.caminho.name}. SVG final será salvo ao lado dele, sem sobrescrever arquivos.')
         return True
 
+    # Navegação e execução em lotes
+
     def avancar(self):
         if self.simulacao is not None:
             self.simulacao.avancar()
@@ -265,19 +276,12 @@ class JanelaSimulador(ctk.CTk):
         inicio = monotonic()
         try:
             for _ in range(32):
-                estado = self.simulacao.historico[self.simulacao.instante_atual]
-                pendentes = [t for t in estado.tarefas if t.estado_tarefa != EstadoTarefa.FINALIZADA]
-                if not pendentes:
+                if not self.simulacao.pode_continuar_execucao():
                     self.timer = None
                     self.atualizar()
                     self.mensagem.configure(text='Execução concluída.')
                     self.salvar_final()
                     return
-                if not estado.cpus:
-                    raise RuntimeError('Há tarefas pendentes, mas nenhuma CPU.')
-                suspensa = next((t for t in pendentes if t.estado_tarefa == EstadoTarefa.SUSPENSA), None)
-                if suspensa is not None:
-                    raise RuntimeError(f'Tarefa {suspensa.id} suspensa: retome manualmente antes de continuar.')
                 self.simulacao.avancar()
                 if monotonic() - inicio >= .012:
                     break
@@ -304,12 +308,14 @@ class JanelaSimulador(ctk.CTk):
                                 if mudou else 'Sem alterações; histórico preservado.')
         return True
 
+    # Seleção, inspeção e atualização dos controles
+
     def tarefa_selecionada(self):
         if not self.ids_tarefas:
             return None
         nomes = [f'Tarefa {id_}' for id_ in self.ids_tarefas]
         id_ = self.ids_tarefas[nomes.index(self.seletor.get())]
-        estado = self.simulacao.historico[self.simulacao.instante_atual]
+        estado = self.simulacao.estado_atual
         return next(t for t in estado.tarefas if t.id == id_)
 
     def editar(self):
@@ -330,7 +336,7 @@ class JanelaSimulador(ctk.CTk):
                 f'Concluídas: {tarefa.instancias_concluidas}/10\n'
                 f'Pendentes: {len(tarefa.ocorrencias_pendentes)}\nPerdeu prazo: {perdeu}\n')
         if self.simulacao is not None:
-            estado = self.simulacao.historico[self.simulacao.instante_atual]
+            estado = self.simulacao.estado_atual
             texto += '\nTicks ociosos:\n' + '\n'.join(f'CPU {c.id_cpu}: {c.tempo_desligada}' for c in estado.cpus)
             texto += '\n\nEventos do snapshot:\n' + '\n'.join(str(e) for e in estado.eventos)
         self.detalhes.configure(state='normal')
@@ -340,7 +346,7 @@ class JanelaSimulador(ctk.CTk):
 
     def atualizar(self):
         if self.simulacao is not None:
-            estado = self.simulacao.historico[self.simulacao.instante_atual]
+            estado = self.simulacao.estado_atual
             self.resumo.configure(text=f'Projeto A · {self.simulacao.algoritmo} · {len(estado.cpus)} CPUs · tick {estado.tick}')
             self.algoritmo.set(self.simulacao.algoritmo)
             for entrada, valor in ((self.quantum, estado.quantum), (self.cpus, len(estado.cpus))):
@@ -360,8 +366,7 @@ class JanelaSimulador(ctk.CTk):
     def atualizar_controles(self):
         carregada = self.simulacao is not None
         livre = self.timer is None
-        pendentes = carregada and any(t.estado_tarefa != EstadoTarefa.FINALIZADA
-            for t in self.simulacao.historico[self.simulacao.instante_atual].tarefas)
+        pendentes = carregada and not self.simulacao.concluida
         for nome, botao in self.botoes.items():
             habilitado = livre and (nome in ('abrir', 'nova') or carregada)
             if nome in ('avancar', 'executar'):
@@ -374,6 +379,8 @@ class JanelaSimulador(ctk.CTk):
         self.seletor.configure(state='normal' if livre and self.ids_tarefas else 'disabled')
         for botao in (self.botao_editar, self.botao_remover):
             botao.configure(state='normal' if livre and self.ids_tarefas else 'disabled')
+
+    # Desenho, zoom e rolagem
 
     def redesenhar(self):
         if self.dados_gantt is None:
@@ -404,6 +411,8 @@ class JanelaSimulador(ctk.CTk):
             self.canvas.xview_moveto(0)
             self.redesenhar()
 
+    # Exportação e encerramento
+
     def escolher_exportacao(self):
         caminho = filedialog.asksaveasfilename(parent=self, defaultextension='.svg',
             filetypes=[('SVG', '*.svg')], initialfile=padroes.NOME_SVG)
@@ -419,9 +428,9 @@ class JanelaSimulador(ctk.CTk):
         return True
 
     def salvar_final(self):
-        estado = self.simulacao.historico[self.simulacao.instante_atual]
+        estado = self.simulacao.estado_atual
         if (not estado.tarefas or self.estado_exportado is estado
-                or any(t.estado_tarefa != EstadoTarefa.FINALIZADA for t in estado.tarefas)):
+                or not self.simulacao.concluida):
             return
         if self.caminho is None:
             if self.escolher_exportacao():

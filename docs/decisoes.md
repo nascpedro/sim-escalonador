@@ -90,7 +90,25 @@ O parser aceita UTF-8 com/sem BOM, espaços, linhas vazias e terminador opcional
 IDs numéricos viram inteiros; textuais usam casefold. Cores viram #RRGGBB. IDs são
 únicos no arquivo; cores são distintas entre periódicas incluídas. Registros
 aperiódicos válidos geram avisos e são ignorados. Não há máximos arbitrários de
-tarefas, CPUs ou duração. Dados ausentes são erros; a política de padrões é pendente.
+tarefas, CPUs ou duração. Campos de configuração vazios recebem os padrões de
+`padroes.py`, com aviso individual; valores explícitos inválidos e formato errado
+são rejeitados. Eventos vazios são normais e não recebem valores do Projeto B.
+
+Os padrões são RM, quantum 0, duas CPUs, duração 1, período e prazo 10.
+São escolhas didáticas, editáveis, sem tentativa de inferir um conjunto escalonável.
+ID e cor sugeridos ficam livres; IDs explícitos posteriores no arquivo são
+reservados antes. Inclusão manual sugere ingresso no tick atual e rejeita passado.
+O botão de sugestão só preenche entradas, sem alterar a simulação por si só.
+Na edição preserva ID/estado, não avança o ingresso original e sugere uma duração
+maior que o progresso atual.
+
+Inclusão/remoção substituem o snapshot selecionado por cópia e descartam somente
+o futuro. A remoção abandona a tarefa e suas ocorrências pendentes, libera CPU e
+não registra conclusão artificial. Ambas geram eventos próprios no Gantt;
+linhas de tarefas removidas continuam visíveis no prefixo histórico. IDs usados
+nesse prefixo não podem ser reutilizados, evitando juntar tarefas diferentes.
+As sugestões também evitam cores históricas; cores explícitas precisam ser únicas
+entre as tarefas presentes. Nova simulação reinicia o histórico.
 
 SVG conserva o prefixo inteiro, a escala padrão de 24 px/tick e a legenda, sem
 recortar pelo viewport. Texto é escapado pelo drawsvg. Suspensão tem preenchimento
@@ -99,5 +117,6 @@ numéricos maiores ficam acima dos menores. Na tela, zoom recalcula coordenadas
 horizontais e mantém fonte fixa; detalhes estreitos precisam de aproximação.
 
 Ao concluir pela janela, salva SVG ao lado da configuração. Um nome existente
-recebe sufixo numérico. Falhas de escrita preservam resultados e permitem escolher
+recebe sufixo numérico. Sem arquivo de entrada, solicita o destino ao concluir;
+cancelar mantém o resultado disponível para exportação posterior. Falhas de escrita preservam resultados e permitem escolher
 outro destino. Na CLI, o destino é explícito. Não se criam diretórios de saída.

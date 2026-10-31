@@ -1,4 +1,5 @@
-from models import Cpu, EstadoSimulacao, EstadoTarefa, Ocorrencia
+from models import Cpu, EstadoSimulacao, EstadoTarefa, Ocorrencia, TCB, normalizar_id
+import padroes
 from scheduler import escalonar
 import copy
 import re
@@ -90,6 +91,51 @@ class Simulacao:
         self.historico[self.instante_atual] = novo
         del self.historico[self.instante_atual + 1:]
         return True
+
+    def sugerir_tarefa(self):
+        estados = self.historico[:self.instante_atual + 1]
+        ids = {t.id for s in estados for t in s.tarefas}
+        ids.update(e['id_tarefa'] for s in estados for e in s.eventos if 'id_tarefa' in e)
+        cores = {t.cor for s in estados for t in s.tarefas}
+        cores.update(e['cor'] for s in estados for e in s.eventos if 'cor' in e)
+        return padroes.sugerir_tarefa(ids, cores, estados[-1].tick)
+
+    def adicionar_tarefa(self, id_tarefa, cor, ingresso, duracao, periodo, prazo):
+        """Inclui uma tarefa futura ou com chegada agora; nunca fabrica passado."""
+        id_tarefa = normalizar_id(id_tarefa)
+        estados = self.historico[:self.instante_atual + 1]
+        if any(t.id == id_tarefa for s in estados for t in s.tarefas) or any(
+                e.get('id_tarefa') == id_tarefa for s in estados for e in s.eventos):
+            raise ValueError('ID já utilizado neste histórico; escolha outro.')
+        for nome, valor, minimo in (('ingresso', ingresso, estados[-1].tick),
+                ('duracao', duracao, 1), ('periodo', periodo, 1), ('prazo', prazo, 1)):
+            if type(valor) is not int or valor < minimo:
+                raise ValueError(f'{nome} deve ser inteiro maior ou igual a {minimo}.')
+        if not isinstance(cor, str) or not re.fullmatch(r'#?[0-9a-fA-F]{6}', cor):
+            raise ValueError('cor deve ser RGB hexadecimal de seis dígitos.')
+        cor = '#' + cor.lstrip('#').upper()
+        if any(t.cor.lstrip('#').upper() == cor[1:] for t in estados[-1].tarefas):
+            raise ValueError('cor já utilizada por outra tarefa.')
+        novo = copy.deepcopy(estados[-1])
+        novo.tarefas.append(TCB(id_tarefa, cor, ingresso, duracao, periodo, prazo))
+        novo.eventos.append(dict(tipo='inclusao', tick=novo.tick, id_tarefa=id_tarefa, cor=cor))
+        self.historico[self.instante_atual] = novo
+        del self.historico[self.instante_atual + 1:]
+
+    def remover_tarefa(self, id_tarefa):
+        """Remove também ocorrências pendentes e libera a CPU, preservando o passado."""
+        anterior = self.historico[self.instante_atual]
+        tarefa = next((t for t in anterior.tarefas if t.id == id_tarefa), None)
+        if tarefa is None:
+            raise ValueError(f'Tarefa {id_tarefa!r} não encontrada.')
+        novo = copy.deepcopy(anterior)
+        novo.tarefas = [t for t in novo.tarefas if t.id != id_tarefa]
+        for cpu in novo.cpus:
+            if cpu.id_tarefa_alocada == id_tarefa:
+                cpu.id_tarefa_alocada = None
+        novo.eventos.append(dict(tipo='remocao', tick=novo.tick, id_tarefa=id_tarefa, cor=tarefa.cor))
+        self.historico[self.instante_atual] = novo
+        del self.historico[self.instante_atual + 1:]
 
     def modificar_tarefa_em_execucao(self, id_tarefa: int | str, **alteracoes) -> None:
         """Edita ingresso, duracao, periodo, prazo, cor ou estado_tarefa.

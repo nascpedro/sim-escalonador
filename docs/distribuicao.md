@@ -32,7 +32,8 @@ A sonda usa diretório temporário fora do repositório e PATH limitado ao
 Windows/System32. Verifica três exportações completas até o tick 185 e uma
 entrada inválida. Também instancia a janela empacotada duas vezes, avança/volta,
 executa por callbacks até o fim, confere o Canvas e o SVG automático, e fecha a
-janela. Temas e Tcl/Tk são assim exercitados no executável, além dos testes do código.
+janela. Também cria uma simulação sem arquivo, inclui e remove uma tarefa e
+exporta seu histórico. Temas e Tcl/Tk são assim exercitados no executável, além dos testes do código.
 As janelas de diagnóstico ficam ocultas e os SVGs usam pastas temporárias.
 O relatório local é salvo em `build/verificacao-distribuicao.json`.
 
@@ -44,8 +45,8 @@ Uso da exportação sem abrir janela:
 
 ## Limites da validação
 
-Resultado local em 31/10/2026: **86 testes aprovados, sem testes ignorados**.
-O pacote passou em três exportações (SVG completo de 39.062 bytes), uma entrada
+Resultado local em 31/10/2026: **93 testes aprovados, sem testes ignorados**.
+O pacote passou em três exportações (SVG vetorial completo), uma entrada
 inválida e duas inicializações/execuções/fechamentos da interface empacotada. Cada
 execução da janela chegou ao tick 185 com 30 conclusões e gerou SVG automático.
 O ZIP foi conferido por CRC e tem cerca de **11 MiB**, sem Qt/Matplotlib.

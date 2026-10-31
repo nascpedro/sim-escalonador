@@ -27,7 +27,10 @@ Copy-Item -LiteralPath (Join-Path $Raiz 'LICENSE') -Destination $Pacote -Force
 Simulador de escalonamento - Projeto A
 
 Extraia a pasta inteira antes de executar SimuladorSO.exe.
-Abra exemplos/configuracao.txt pelo botao Abrir configuracao.
+Abra exemplos/configuracao.txt pelo botao Abrir arquivo, ou use Nova simulacao.
+Adicionar/Editar/Remover alteram tarefas no instante selecionado.
+Sugestoes: RM, quantum 0, 2 CPUs; tarefa de duracao 1, periodo e prazo 10.
+Os formularios permitem substituir as sugestoes antes de aplicar.
 Avance, retroceda e selecione uma tarefa para inspecionar ou editar.
 O botao Executar ate o fim conclui dez ocorrencias de cada tarefa.
 O SVG final e salvo ao lado da configuracao, sem sobrescrever arquivos existentes.
@@ -38,8 +41,7 @@ SimuladorSO.exe --exportar exemplos/configuracao.txt resultado.svg
 
 Distribuicao Windows x64. Nao e necessario instalar Python ou bibliotecas.
 O pacote ainda precisa de homologacao em uma maquina Windows limpa.
-Limitacoes: inclusao/remocao de tarefas durante a simulacao e sugestoes de
-valores padrao para todas as caracteristicas ainda nao estao implementadas.
+Sem arquivo de entrada, a janela solicita o destino do SVG ao concluir.
 '@ | Set-Content -LiteralPath (Join-Path $Pacote 'LEIA-ME.txt') -Encoding UTF8
 $Relatorio = & $PythonProjeto -B (Join-Path $PSScriptRoot 'verificar_distribuicao.py') $Pacote
 if ($LASTEXITCODE -ne 0) { throw 'O executavel falhou na verificacao; ZIP nao atualizado.' }

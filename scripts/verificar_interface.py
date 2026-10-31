@@ -30,9 +30,18 @@ def verificar(classe_janela, configuracao, relatorio):
             estado = janela.simulacao.historico[janela.simulacao.instante_atual]
             assert janela.canvas.find_all(), 'Canvas sem elementos.'
             assert (Path(pasta) / 'configuracao-gantt.svg').is_file()
+            elementos = len(janela.canvas.find_all())
+            janela.nova()
+            janela.simulacao.adicionar_tarefa(**janela.simulacao.sugerir_tarefa())
+            janela.atualizar()
+            janela.avancar()
+            janela.remover()
+            assert not janela.simulacao.historico[-1].tarefas
+            assert janela.canvas.find_all(), 'Histórico da tarefa removida não foi desenhado.'
+            assert janela.exportar_arquivo(Path(pasta) / 'remocao.svg')
             Path(relatorio).write_text(json.dumps(dict(
                 interface=True, tick_final=estado.tick,
                 concluidas=sum(t.instancias_concluidas for t in estado.tarefas),
-                elementos_canvas=len(janela.canvas.find_all()))), encoding='utf-8')
+                conjunto_editavel=True, elementos_canvas=elementos)), encoding='utf-8')
     finally:
         janela.fechar()

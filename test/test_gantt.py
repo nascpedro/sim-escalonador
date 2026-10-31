@@ -83,4 +83,4 @@ class TestGanttSVG(unittest.TestCase):
         desenho.poligono = registrar
         desenhar_gantt(dados, desenho, 'RM')
         # Tarefas 3 e 2 recebem CPUs; tarefa 1 não recebe o diamante.
-        self.assertEqual(sorted(y for y in sorteios if y < 400), [156, 261])
+        self.assertEqual(sorted(y for y in sorteios if y < 400), [156, 281])

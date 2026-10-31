@@ -19,6 +19,8 @@ EVENTOS = {
     'perda_prazo': ('Perda de prazo', '#a62626', 64),
     'fim_quantum': ('Fim de quantum', '#855215', 75),
     'sorteio': ('Sorteio', '#6e3f97', 86),
+    'inclusao': ('Inclusão manual', '#2563eb', 97),
+    'remocao': ('Remoção manual', '#dc2626', 108),
 }
 
 
@@ -71,10 +73,13 @@ def preparar_gantt(simulacao):
     """Lê somente o prefixo selecionado, sem executar ticks nem alterar estados."""
     estados = simulacao.historico[:simulacao.instante_atual + 1]
     fim = estados[-1].tick
-    ids = sorted({t.id for s in estados for t in s.tarefas},
+    ids = {t.id for s in estados for t in s.tarefas}
+    ids.update(e['id_tarefa'] for s in estados for e in s.eventos
+               if e['tipo'] in ('inclusao', 'remocao'))
+    ids = sorted(ids,
                  key=lambda id_: (isinstance(id_, str), id_), reverse=True)
     cpus = list(dict.fromkeys(c.id_cpu for s in estados for c in s.cpus))
-    eventos = [e for s in estados[1:] for e in s.eventos
+    eventos = [e for s in estados for e in s.eventos
                if e['tipo'] in EVENTOS and 0 <= e['tick'] <= fim]
     return fim, ids, cpus, eventos, coletar_intervalos(estados, eventos, fim)
 
@@ -83,7 +88,7 @@ def tamanho_gantt(dados, escala=24):
     fim, ids, cpus, _, _ = dados
     margem = max(140, max((len(str(id_)) * 9 + 75 for id_ in ids), default=140))
     largura = max(900, margem + max(1, fim) * escala + 30)
-    altura = 80 + len(ids) * 105 + len(cpus) * 36 + 150
+    altura = 80 + len(ids) * 125 + len(cpus) * 36 + 150
     return largura, altura, margem
 
 
@@ -95,6 +100,13 @@ def marcador(destino, tipo, x, y, cor):
         pontos = [(x-4, y+4), (x+4, y+4), (x, y-4)]
     elif tipo == 'sorteio':
         pontos = [(x, y-4), (x+4, y), (x, y+4), (x-4, y)]
+    elif tipo == 'inclusao':
+        destino.linha(x-4, y, x+4, y, cor)
+        destino.linha(x, y-4, x, y+4, cor)
+        return
+    elif tipo == 'remocao':
+        destino.linha(x-4, y, x+4, y, cor)
+        return
     elif tipo == 'perda_prazo':
         destino.linha(x-4, y-4, x+4, y+4, cor)
         destino.linha(x-4, y+4, x+4, y-4, cor)
@@ -110,8 +122,8 @@ def desenhar_gantt(dados, destino, algoritmo, escala=24):
     """Ticks viram X; tarefas viram linhas; ambos os destinos recebem o mesmo desenho."""
     fim, ids, cpus, eventos, grupos = dados
     largura, altura, margem = tamanho_gantt(dados, escala)
-    linhas = {id_: 70 + i * 105 for i, id_ in enumerate(ids)}
-    linhas_cpu = {cpu: 70 + len(ids)*105 + i*36 for i, cpu in enumerate(cpus)}
+    linhas = {id_: 70 + i * 125 for i, id_ in enumerate(ids)}
+    linhas_cpu = {cpu: 70 + len(ids)*125 + i*36 for i, cpu in enumerate(cpus)}
     destino.texto(15, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
     # Marcas legíveis, sem criar um texto por tick em simulações extensas.
     minimo = max(1, 65 / escala, max(1, fim) / 200)

@@ -34,6 +34,36 @@ class TestInterface(unittest.TestCase):
             time.sleep(.005)
         self.assertIsNone(self.janela.timer, 'Execução não terminou')
 
+    def test_nova_inclusao_padroes_remocao_e_exportacao_sem_arquivo(self):
+        from gui import DialogoTarefa
+        from unittest.mock import patch
+        self.janela.nova()
+        self.assertIsNone(self.janela.caminho)
+        self.assertEqual(self.janela.cpus.get(), '2')
+        dialogo = DialogoTarefa(self.janela)
+        self.assertEqual(dialogo.campos['periodo'].get(), '10')
+        dialogo.campos['duracao'].delete(0, 'end')
+        dialogo.campos['duracao'].insert(0, '0')
+        self.assertFalse(dialogo.salvar())
+        dialogo.sugerir()
+        self.assertTrue(dialogo.salvar())
+        sim = self.janela.simulacao
+        self.janela.algoritmo.set('EDF')
+        self.janela.sugerir_sistema()
+        self.assertEqual(self.janela.algoritmo.get(), 'RM')
+        self.assertEqual(sim.algoritmo, 'RM')
+        with patch('gui.filedialog.asksaveasfilename', return_value=''):
+            self.janela.executar_completa()
+            self.esperar()
+        self.assertEqual(sim.historico[-1].tarefas[0].instancias_concluidas, 10)
+        self.assertIsNone(self.janela.estado_exportado)
+        destino = Path(self.pasta.name) / 'novo.svg'
+        with patch('gui.filedialog.asksaveasfilename', return_value=str(destino)):
+            self.janela.salvar_final()
+        self.assertTrue(destino.exists())
+        self.janela.remover()
+        self.assertEqual(sim.historico[-1].tarefas, [])
+
     def test_navegacao_zoom_exportacao_e_erro_preservam_estado(self):
         self.janela.avancar()
         self.janela.avancar()

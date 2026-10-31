@@ -2,6 +2,17 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
+def normalizar_id(valor):
+    """Mesma identidade no arquivo e na inclusão manual: 01 = 1; Tarefa = tarefa."""
+    if type(valor) not in (int, str) or not str(valor).strip():
+        raise ValueError('id da tarefa não pode ser vazio e deve ser inteiro ou texto.')
+    texto = str(valor).strip()
+    try:
+        return int(texto)
+    except ValueError:
+        return texto.casefold()
+
+
 @dataclass
 class Ocorrencia:
     """Uma ativação que espera a ocorrência anterior da mesma tarefa terminar."""

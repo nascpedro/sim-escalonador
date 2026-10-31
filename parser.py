@@ -2,7 +2,8 @@
 
 import re
 
-from models import Cpu, EstadoSimulacao, TCB
+from models import Cpu, EstadoSimulacao, TCB, normalizar_id
+import padroes
 
 
 def _campos(texto, quantidade, linha):
@@ -30,9 +31,21 @@ def _inteiro(texto, nome, minimo, linha):
     return valor
 
 
-def _ler_cabecalho(texto, linha):
+def _preencher_padroes(campos, nomes, valores, linha, avisos):
+    """Campo vazio é opção pelo padrão; valor informado nunca é substituído."""
+    for i, (nome, valor) in enumerate(zip(nomes, valores)):
+        if campos[i] == '':
+            campos[i] = str(valor)
+            avisos.append(f'Linha {linha}: {nome} vazio; usado padrão {valor!r}.')
+    return campos
+
+
+def _ler_cabecalho(texto, linha, avisos):
     """Lê algoritmo, quantum e quantidade de CPUs da primeira linha útil."""
-    algoritmo, quantum, quantidade_cpus = _campos(texto, 3, linha)
+    campos = _campos(texto, 3, linha)
+    algoritmo, quantum, quantidade_cpus = _preencher_padroes(campos,
+        ('algoritmo', 'quantum', 'qtde_cpus'),
+        (padroes.ALGORITMO, padroes.QUANTUM, padroes.QUANTIDADE_CPUS), linha, avisos)
     algoritmo = algoritmo.upper()
     if algoritmo not in ("RM", "EDF"):
         raise ValueError(f"Linha {linha}: algoritmo deve ser RM ou EDF; recebido {algoritmo!r}.")
@@ -41,20 +54,14 @@ def _ler_cabecalho(texto, linha):
     return algoritmo, quantum, quantidade_cpus
 
 
-def _ler_tarefa(texto, linha, ids_existentes):
+def _ler_tarefa(campos, linha, ids_existentes):
     """Converte um registro em TCB, sem modificar o conjunto de IDs recebido.
 
     O ID é verificado primeiro para preservar a ordem das mensagens de erro.
     Uma tarefa aperiódica também é validada; o carregador decide ignorá-la.
     """
-    identificador, cor, ingresso, duracao, periodo, prazo, eventos = _campos(texto, 7, linha)
-    if not identificador:
-        raise ValueError(f"Linha {linha}: id da tarefa não pode ser vazio.")
-    # Preserva a compatibilidade com IDs inteiros sem restringir IDs textuais.
-    try:
-        identificador = int(identificador)
-    except ValueError:
-        identificador = identificador.casefold()
+    identificador, cor, ingresso, duracao, periodo, prazo, eventos = campos
+    identificador = normalizar_id(identificador)
     if identificador in ids_existentes:
         raise ValueError(f"Linha {linha}: id duplicado: {identificador!r}.")
     if not re.fullmatch(r"#?[0-9a-fA-F]{6}", cor):
@@ -70,8 +77,9 @@ def _ler_tarefa(texto, linha, ids_existentes):
 def carregar_configuracao(caminho):
     """Retorna (EstadoSimulacao, algoritmo RM/EDF, lista de avisos).
 
-    O arquivo deve ser UTF-8, com ou sem BOM. Campos obrigatórios não recebem
-    defaults. A lista de eventos é lida como um campo opaco do Projeto B.
+    O arquivo deve ser UTF-8, com ou sem BOM. Campos de configuração vazios
+    recebem padrões com aviso; formato errado e valores inválidos são erros.
+    A lista de eventos é lida como um campo opaco do Projeto B.
     IDs numéricos viram int; os demais usam casefold. Cores viram #RRGGBB,
     e CPUs são numeradas a partir de zero. IDs são únicos em todo o arquivo;
     cores só precisam ser únicas entre as tarefas periódicas incluídas.
@@ -95,16 +103,27 @@ def carregar_configuracao(caminho):
     if not registros:
         raise ValueError("Linha 1: cabeçalho ausente.")
     linha, texto = registros[0]
-    algoritmo, quantum, quantidade_cpus = _ler_cabecalho(texto, linha)
+    avisos = []
+    algoritmo, quantum, quantidade_cpus = _ler_cabecalho(texto, linha, avisos)
     if len(registros) == 1:
         raise ValueError(f"Linha {len(linhas) + 1}: esperado pelo menos um registro de tarefa.")
 
     tarefas = []
-    avisos = []
     ids = set()
     cores = set()
-    for linha, texto in registros[1:]:
-        tarefa = _ler_tarefa(texto, linha, ids)
+    linhas_tarefas = [(linha, _campos(texto, 7, linha)) for linha, texto in registros[1:]]
+    # Reserva os valores explícitos de todo o arquivo: uma sugestão na primeira
+    # linha não pode ocupar o ID ou a cor que o usuário informou numa linha posterior.
+    reservados = {normalizar_id(c[0]) for _, c in linhas_tarefas if c[0]}
+    cores_reservadas = {c[1].lstrip('#').upper() for _, c in linhas_tarefas if c[1]}
+    for linha, campos in linhas_tarefas:
+        sugestao = padroes.sugerir_tarefa(reservados, cores_reservadas)
+        _preencher_padroes(campos, ('id', 'cor', 'ingresso', 'duracao', 'periodo', 'prazo'),
+                          (sugestao['id_tarefa'], sugestao['cor'], sugestao['ingresso'],
+                           sugestao['duracao'], sugestao['periodo'], sugestao['prazo']), linha, avisos)
+        tarefa = _ler_tarefa(campos, linha, ids)
+        reservados.add(tarefa.id)
+        cores_reservadas.add(tarefa.cor.lstrip('#'))
         ids.add(tarefa.id)
         # Valida o registro antes de ignorá-lo; um período zero não encobre erros.
         if tarefa.periodo == 0:

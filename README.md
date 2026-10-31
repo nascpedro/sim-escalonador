@@ -19,11 +19,13 @@ uv pip install --python .venv-ctk/Scripts/python.exe -r requirements.txt
 .\.venv-ctk\Scripts\python.exe gui.py
 ```
 
-Abra um arquivo, avance/volte, selecione uma tarefa para inspecionar ou editar.
+Abra um arquivo ou clique em Nova simulação e Adicionar. Selecione uma tarefa
+para inspecionar, editar ou remover; avance e volte pelos ticks.
 Zoom e rolagem só alteram a visualização. Uma edição aceita descarta o futuro do
 instante selecionado e preserva os estados anteriores. Executar até o fim termina
 após dez ocorrências concluídas por tarefa. Ao concluir, o SVG é salvo ao lado da
-configuração; nomes existentes recebem sufixo numérico. Exportar SVG permite
+configuração; nomes existentes recebem sufixo numérico. Sem arquivo de entrada,
+a janela solicita o destino do SVG final. Exportar SVG permite
 escolher outro destino ou salvar um estado intermediário.
 
 ## Arquivo de entrada
@@ -38,6 +40,34 @@ linhas vazias, maiúsculas/minúsculas e terminador `;` opcional são tratados.
 Aperiódicas (período zero) são ignoradas com aviso. A lista de eventos pertence ao
 Projeto B e não é executada. Erros informam o motivo e a linha quando aplicável.
 
+## Valores padrão
+
+As sugestões ficam em `padroes.py` e podem ser substituídas antes de aplicar:
+
+| Característica | Sugestão |
+|---|---|
+| Algoritmo, quantum, CPUs | RM, 0 (sem limite de fatia), 2 |
+| ID e cor | Próximo inteiro positivo livre e cor disponível |
+| Ingresso | 0 no arquivo; tick atual na inclusão manual |
+| Duração, período, prazo relativo | 1, 10, 10 ticks |
+
+O botão Sugerir padrões preenche o formulário; Salvar/Aplicar confirma a mudança.
+Na edição, ingresso permanece compatível com o histórico e duração supera o
+progresso já executado. Estado, CPU, contadores e prazo absoluto são controlados
+pelo motor; a nova tarefa começa AGUARDANDO, sem execuções anteriores.
+
+No arquivo, campos de configuração vazios recebem sugestões com avisos por
+campo. Valores explícitos prevalecem. Cabeçalho/registro ausente, número errado
+de campos e valores explícitos inválidos continuam sendo erros. Por exemplo:
+
+```text
+;;
+;;;;;;
+```
+
+Isso cria uma tarefa com os padrões. IDs e cores explícitos das linhas seguintes
+são reservados antes de gerar sugestões.
+
 ## Roteiro para explicar o código
 
 | Arquivo | Responsabilidade |
@@ -45,6 +75,7 @@ Projeto B e não é executada. Erros informam o motivo e a linha quando aplicáv
 | `models.py` | Dados de tarefa, ocorrência, CPU e snapshot. |
 | `scheduler.py` | Ordenação RM/EDF e desempates. |
 | `engine.py` | Ativar, despachar, executar, verificar prazos e guardar histórico. |
+| `padroes.py` | Valores iniciais e sugestões de ID/cor disponíveis. |
 | `parser.py` | Converter o arquivo em estado inicial, algoritmo e avisos. |
 | `linha_tempo.py` | Converter o histórico selecionado em intervalos. |
 | `gantt.py` | Um desenho para Canvas e drawsvg: retângulos, linhas, textos e símbolos. |
@@ -87,5 +118,4 @@ preservado fora do versionamento. Os protótipos anteriores e a implementação 
 permanecem acessíveis no histórico Git (`94ace73`). Esta migração está na branch
 `codex/customtkinter-drawsvg`; a main ainda aponta para a versão anterior.
 
-**Ainda falta:** política completa de valores padrão, inclusão/remoção de tarefas
-durante a execução, homologação em Windows limpo e ensaio dos exemplos pelo autor.
+**Ainda falta:** homologação em Windows limpo e ensaio dos exemplos pelo autor.

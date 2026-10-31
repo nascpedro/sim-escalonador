@@ -12,21 +12,32 @@ import customtkinter as ctk
 
 from engine import Simulacao
 from gantt import DesenhoCanvas, desenhar_gantt, exportar_svg, preparar_gantt, tamanho_gantt
-from models import EstadoTarefa
+from models import EstadoTarefa, EstadoSimulacao, Cpu, TCB
+import padroes
 from parser import carregar_configuracao
 
 
 class DialogoTarefa(tk.Toplevel):
     """Coleta somente alterações; o motor decide se elas são válidas."""
-    def __init__(self, janela, tarefa):
+    def __init__(self, janela, tarefa=None):
         super().__init__(janela)
         self.janela, self.tarefa = janela, tarefa
-        self.title(f'Editar tarefa {tarefa.id}')
+        self.nova = tarefa is None
+        if self.nova:
+            tarefa = TCB(**janela.simulacao.sugerir_tarefa())
+            self.tarefa = tarefa
+        self.title('Adicionar tarefa' if self.nova else f'Editar tarefa {tarefa.id}')
         self.resizable(False, False)
         self.transient(janela)
+        ctk.CTkLabel(self, text='ID').grid(row=0, column=0, padx=16, pady=6, sticky='w')
+        self.identificador = ctk.CTkEntry(self, width=220)
+        self.identificador.insert(0, str(tarefa.id))
+        self.identificador.grid(row=0, column=1, padx=16, pady=6)
+        if not self.nova:
+            self.identificador.configure(state='disabled')
         self.campos = {}
         for linha, (campo, nome) in enumerate((('ingresso', 'Ingresso'), ('duracao', 'Duração'),
-                ('periodo', 'Período'), ('prazo', 'Prazo relativo'), ('cor', 'Cor RGB'))):
+                ('periodo', 'Período'), ('prazo', 'Prazo relativo'), ('cor', 'Cor RGB')), start=1):
             ctk.CTkLabel(self, text=nome).grid(row=linha, column=0, padx=16, pady=6, sticky='w')
             entrada = ctk.CTkEntry(self, width=220)
             entrada.insert(0, str(getattr(tarefa, campo)))
@@ -34,14 +45,31 @@ class DialogoTarefa(tk.Toplevel):
             self.campos[campo] = entrada
         self.estado = ctk.CTkOptionMenu(self, values=[e.name for e in EstadoTarefa])
         self.estado.set(tarefa.estado_tarefa.name)
-        ctk.CTkLabel(self, text='Estado').grid(row=5, column=0, padx=16, sticky='w')
-        self.estado.grid(row=5, column=1, padx=16, pady=6)
+        ctk.CTkLabel(self, text='Estado').grid(row=6, column=0, padx=16, sticky='w')
+        self.estado.grid(row=6, column=1, padx=16, pady=6)
         self.erro = ctk.CTkLabel(self, text='Uma edição aceita descarta o futuro.\nAGUARDANDO abandona a ocorrência e sua fila.',
                                  wraplength=370, justify='left')
-        self.erro.grid(row=6, column=0, columnspan=2, padx=16, pady=12)
-        ctk.CTkButton(self, text='Salvar', command=self.salvar).grid(row=7, column=0, padx=16, pady=16)
-        ctk.CTkButton(self, text='Cancelar', command=self.destroy).grid(row=7, column=1, padx=16, pady=16)
+        self.erro.grid(row=7, column=0, columnspan=2, padx=16, pady=12)
+        ctk.CTkButton(self, text='Salvar', command=self.salvar).grid(row=9, column=0, padx=16, pady=16)
+        ctk.CTkButton(self, text='Cancelar', command=self.destroy).grid(row=9, column=1, padx=16, pady=16)
+        if self.nova:
+            self.estado.configure(state='disabled')
+            self.erro.configure(text='Sugestões editáveis. A chegada deve ser no tick atual ou posterior.')
+        ctk.CTkButton(self, text='Sugerir padrões', command=self.sugerir).grid(
+            row=8, column=0, columnspan=2, padx=16, pady=10)
         self.grab_set()
+
+    def sugerir(self):
+        valores = self.janela.simulacao.sugerir_tarefa()
+        if not self.nova:
+            valores['ingresso'] = min(self.tarefa.ingresso, valores['ingresso'])
+            valores['duracao'] = max(valores['duracao'], self.tarefa.tempo_exec_instancia + 1)
+        for campo, entrada in self.campos.items():
+            entrada.delete(0, 'end')
+            entrada.insert(0, str(valores[campo]))
+        if self.nova:
+            self.identificador.delete(0, 'end')
+            self.identificador.insert(0, str(valores['id_tarefa']))
 
     def salvar(self):
         alteracoes = {}
@@ -55,18 +83,22 @@ class DialogoTarefa(tk.Toplevel):
                         valor = int(texto)
                     except ValueError:
                         raise ValueError(f'{campo} deve ser inteiro.') from None
-                if valor != getattr(self.tarefa, campo):
+                if self.nova or valor != getattr(self.tarefa, campo):
                     alteracoes[campo] = valor
             estado = EstadoTarefa[self.estado.get()]
             if estado != self.tarefa.estado_tarefa:
                 alteracoes['estado_tarefa'] = estado
-            self.janela.simulacao.modificar_tarefa_em_execucao(self.tarefa.id, **alteracoes)
+            if self.nova:
+                self.janela.simulacao.adicionar_tarefa(self.identificador.get(), **alteracoes)
+            else:
+                self.janela.simulacao.modificar_tarefa_em_execucao(self.tarefa.id, **alteracoes)
         except ValueError as erro:
             self.erro.configure(text=str(erro), text_color='#a62626')
             return False
         self.janela.atualizar()
-        self.janela.mensagem.configure(text='Tarefa atualizada; snapshots anteriores preservados.'
-                                      if alteracoes else 'Sem alterações; histórico preservado.')
+        self.janela.mensagem.configure(text='Tarefa adicionada; snapshots anteriores preservados.' if self.nova else
+            ('Tarefa atualizada; snapshots anteriores preservados.'
+             if alteracoes else 'Sem alterações; histórico preservado.'))
         self.destroy()
         return True
 
@@ -79,7 +111,7 @@ class JanelaSimulador(ctk.CTk):
         self.minsize(980, 650)
         self.simulacao = None
         self.caminho = None
-        self.escala = 24.0
+        self.escala = padroes.ESCALA_GANTT
         self.dados_gantt = None
         self.ids_tarefas = []
         self.timer = None
@@ -92,7 +124,7 @@ class JanelaSimulador(ctk.CTk):
         self._montar_controles()
         self._montar_grafico()
         self._montar_inspecao()
-        self.mensagem = ctk.CTkLabel(self, text='Abra uma configuração para começar.', anchor='w',
+        self.mensagem = ctk.CTkLabel(self, text='Abra um arquivo ou crie uma nova simulação.', anchor='w',
                                     wraplength=1100, justify='left')
         self.mensagem.grid(row=3, column=0, columnspan=2, padx=15, pady=10, sticky='ew')
         self.atualizar()
@@ -104,10 +136,10 @@ class JanelaSimulador(ctk.CTk):
         barra.grid(row=1, column=0, columnspan=2, padx=12, pady=(0, 10), sticky='ew')
         self.botoes = {}
         for i, (nome, texto, acao) in enumerate((
-                ('abrir', 'Abrir arquivo', self.abrir), ('voltar', '← Voltar', self.retroceder),
+                ('nova', 'Nova simulação', self.nova), ('abrir', 'Abrir arquivo', self.abrir), ('voltar', '← Voltar', self.retroceder),
                 ('avancar', 'Avançar tick →', self.avancar), ('executar', 'Executar até o fim', self.executar_completa),
                 ('exportar', 'Exportar SVG', self.escolher_exportacao))):
-            botao = ctk.CTkButton(barra, text=texto, command=acao, width=145)
+            botao = ctk.CTkButton(barra, text=texto, command=acao, width=130)
             botao.grid(row=0, column=i, padx=6, pady=10)
             self.botoes[nome] = botao
 
@@ -141,14 +173,22 @@ class JanelaSimulador(ctk.CTk):
         self.seletor.grid(row=0, column=0, padx=12, pady=12, sticky='ew')
         self.detalhes = ctk.CTkTextbox(painel, width=250, wrap='word')
         self.detalhes.grid(row=1, column=0, padx=12, pady=(0, 10), sticky='nsew')
-        self.botao_editar = ctk.CTkButton(painel, text='Editar tarefa', command=self.editar)
-        self.botao_editar.grid(row=2, column=0, padx=12, pady=8, sticky='ew')
+        acoes = ctk.CTkFrame(painel, fg_color='transparent')
+        acoes.grid(row=2, column=0, padx=12, pady=8, sticky='ew')
+        self.botao_adicionar = ctk.CTkButton(acoes, text='Adicionar', width=74,
+            command=lambda: DialogoTarefa(self))
+        self.botao_editar = ctk.CTkButton(acoes, text='Editar', width=74, command=self.editar)
+        self.botao_remover = ctk.CTkButton(acoes, text='Remover', width=74, command=self.remover)
+        for i, botao in enumerate((self.botao_adicionar, self.botao_editar, self.botao_remover)):
+            botao.grid(row=0, column=i, padx=2)
         self.algoritmo = ctk.CTkOptionMenu(painel, values=['RM', 'EDF'])
         self.algoritmo.grid(row=3, column=0, padx=12, pady=6, sticky='ew')
-        self.quantum = self._campo_sistema(painel, 4, 'Quantum', '0')
-        self.cpus = self._campo_sistema(painel, 6, 'Quantidade de CPUs', '1')
+        self.quantum = self._campo_sistema(painel, 4, 'Quantum', str(padroes.QUANTUM))
+        self.cpus = self._campo_sistema(painel, 6, 'Quantidade de CPUs', str(padroes.QUANTIDADE_CPUS))
         self.botao_configurar = ctk.CTkButton(painel, text='Aplicar configuração', command=self.configurar)
-        self.botao_configurar.grid(row=8, column=0, padx=12, pady=12, sticky='ew')
+        self.botao_configurar.grid(row=8, column=0, padx=12, pady=6, sticky='ew')
+        self.botao_padroes = ctk.CTkButton(painel, text='Sugerir padrões', command=self.sugerir_sistema)
+        self.botao_padroes.grid(row=9, column=0, padx=12, pady=(0, 10), sticky='ew')
 
     def _campo_sistema(self, painel, linha, rotulo, valor):
         ctk.CTkLabel(painel, text=rotulo, anchor='w').grid(row=linha, column=0, padx=12, sticky='ew')
@@ -156,6 +196,31 @@ class JanelaSimulador(ctk.CTk):
         entrada.insert(0, valor)
         entrada.grid(row=linha+1, column=0, padx=12, pady=(0, 6), sticky='ew')
         return entrada
+
+    def nova(self):
+        self.simulacao = Simulacao(EstadoSimulacao(0, [],
+            [Cpu(i) for i in range(padroes.QUANTIDADE_CPUS)], padroes.QUANTUM), padroes.ALGORITMO)
+        self.caminho = None
+        self.estado_exportado = None
+        self.escala = padroes.ESCALA_GANTT
+        self.canvas.xview_moveto(0)
+        self.canvas.yview_moveto(0)
+        self.atualizar()
+        self.mensagem.configure(text='Nova simulação. Adicione tarefas e ajuste as sugestões antes de executar.')
+
+    def sugerir_sistema(self):
+        self.algoritmo.set(padroes.ALGORITMO)
+        for entrada, valor in ((self.quantum, padroes.QUANTUM), (self.cpus, padroes.QUANTIDADE_CPUS)):
+            entrada.delete(0, 'end')
+            entrada.insert(0, str(valor))
+        self.mensagem.configure(text='Padrões sugeridos; confira os valores e clique em Aplicar configuração.')
+
+    def remover(self):
+        tarefa = self.tarefa_selecionada()
+        if tarefa is not None:
+            self.simulacao.remover_tarefa(tarefa.id)
+            self.atualizar()
+            self.mensagem.configure(text='Tarefa removida e CPU liberada; snapshots anteriores preservados.')
 
     def abrir(self):
         caminho = filedialog.askopenfilename(parent=self, filetypes=[('Texto', '*.txt'), ('Todos', '*')])
@@ -171,7 +236,7 @@ class JanelaSimulador(ctk.CTk):
         self.simulacao = Simulacao(estado, algoritmo)
         self.caminho = Path(caminho).resolve()
         self.estado_exportado = None
-        self.escala = 24.0
+        self.escala = padroes.ESCALA_GANTT
         self.seletor.set('Sem tarefas')
         self.canvas.xview_moveto(0)
         self.canvas.yview_moveto(0)
@@ -298,16 +363,17 @@ class JanelaSimulador(ctk.CTk):
         pendentes = carregada and any(t.estado_tarefa != EstadoTarefa.FINALIZADA
             for t in self.simulacao.historico[self.simulacao.instante_atual].tarefas)
         for nome, botao in self.botoes.items():
-            habilitado = livre and (nome == 'abrir' or carregada)
+            habilitado = livre and (nome in ('abrir', 'nova') or carregada)
             if nome in ('avancar', 'executar'):
                 habilitado = habilitado and pendentes
             if nome == 'voltar':
                 habilitado = habilitado and self.simulacao.instante_atual > 0
             botao.configure(state='normal' if habilitado else 'disabled')
-        for controle in (self.algoritmo, self.quantum, self.cpus, self.botao_configurar, *self.botoes_zoom):
+        for controle in (self.algoritmo, self.quantum, self.cpus, self.botao_configurar, self.botao_padroes, self.botao_adicionar, *self.botoes_zoom):
             controle.configure(state='normal' if livre and carregada else 'disabled')
         self.seletor.configure(state='normal' if livre and self.ids_tarefas else 'disabled')
-        self.botao_editar.configure(state='normal' if livre and self.ids_tarefas else 'disabled')
+        for botao in (self.botao_editar, self.botao_remover):
+            botao.configure(state='normal' if livre and self.ids_tarefas else 'disabled')
 
     def redesenhar(self):
         if self.dados_gantt is None:
@@ -340,9 +406,8 @@ class JanelaSimulador(ctk.CTk):
 
     def escolher_exportacao(self):
         caminho = filedialog.asksaveasfilename(parent=self, defaultextension='.svg',
-            filetypes=[('SVG', '*.svg')], initialfile='gantt.svg')
-        if caminho:
-            self.exportar_arquivo(caminho)
+            filetypes=[('SVG', '*.svg')], initialfile=padroes.NOME_SVG)
+        return bool(caminho) and self.exportar_arquivo(caminho)
 
     def exportar_arquivo(self, caminho):
         try:
@@ -357,6 +422,10 @@ class JanelaSimulador(ctk.CTk):
         estado = self.simulacao.historico[self.simulacao.instante_atual]
         if (not estado.tarefas or self.estado_exportado is estado
                 or any(t.estado_tarefa != EstadoTarefa.FINALIZADA for t in estado.tarefas)):
+            return
+        if self.caminho is None:
+            if self.escolher_exportacao():
+                self.estado_exportado = estado
             return
         destino = self.caminho.with_name(self.caminho.stem + '-gantt.svg')
         numero = 2

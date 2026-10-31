@@ -91,23 +91,22 @@ class TesteParser(unittest.TestCase):
 
     def test_rejeita_cabecalho_invalido(self):
         for cabecalho, motivo in [
-            ("FIFO;0;1", "algoritmo"), (";0;1", "algoritmo"),
+            ("FIFO;0;1", "algoritmo"),
             ("RM;-1;1", "quantum"), ("RM;1.5;1", "quantum"),
-            ("RM;;1", "quantum"), ("RM;0;0", "qtde_cpus"),
+            ("RM;0;0", "qtde_cpus"),
             ("RM;0;-2", "qtde_cpus"), ("RM;0;dois", "qtde_cpus"),
         ]:
             with self.subTest(cabecalho=cabecalho):
                 with self.assertRaisesRegex(ValueError, rf"[Ll]inha 1:.*{motivo}"):
                     self.carregar(cabecalho + "\n1;FFFFFF;0;1;2;2;")
 
-    def test_rejeita_dados_de_tarefa_invalidos_sem_preencher_defaults(self):
+    def test_rejeita_valores_explicitos_invalidos(self):
         for indice, nome, valores in [
-            (0, "id", [""]),
-            (1, "cor", ["", "FFF", "#12345G", "##ABCDEF", "1234567"]),
-            (2, "ingresso", ["", "-1", "1.5", "texto"]),
-            (3, "duracao", ["", "0", "-1", "1.5"]),
-            (4, "periodo", ["", "-1", "texto"]),
-            (5, "prazo", ["", "0", "-1", "texto"]),
+            (1, "cor", ["FFF", "#12345G", "##ABCDEF", "1234567"]),
+            (2, "ingresso", ["-1", "1.5", "texto"]),
+            (3, "duracao", ["0", "-1", "1.5"]),
+            (4, "periodo", ["-1", "texto"]),
+            (5, "prazo", ["0", "-1", "texto"]),
         ]:
             for valor in valores:
                 with self.subTest(campo=nome, valor=valor):

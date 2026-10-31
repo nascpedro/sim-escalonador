@@ -33,8 +33,12 @@ Este arquivo acompanha o escopo; item em aberto não significa requisito atendid
 ## Ainda fora desta rodada
 
 - [x] Primeira interface PySide6: abrir arquivo, mostrar tarefas/avisos, avançar/retroceder, editar tarefa selecionada e executar até o fim em lotes Qt, sem alterar regras do motor.
-- [x] Primeiro Gantt: rolagem/zoom, ordem dos IDs, CPU nos blocos, suspensão hachurada, CPUs desligadas, legenda e marcadores dos eventos existentes. Retrocesso mostra somente o histórico até o instante selecionado.
-- [ ] Exportação integral da imagem (não apenas captura da janela).
+- [x] Gantt compartilhado com Matplotlib: `gantt.py` lê o histórico, desenha intervalos com `broken_barh` e marcadores. A janela usa `FigureCanvasQTAgg`; o SVG usa `Figure.savefig`. Removidos o desenho manual de Graphics View e a geração manual de XML. CPU, estados, ordem dos IDs e prefixo selecionado preservados.
+- [ ] Redesenhar a interface para apresentação: primeira versão funcional considerada confusa. Validar organização do Gantt, configuração e inspeção antes de reescrever; proposta exploratória em `prototipos/interface.html`. Preservar GUI atual enquanto isso.
+- [x] Exportação SVG independente da GUI: API sem mutação e CLI para carregar, executar completamente e gerar o gráfico inteiro, com CPUs/estados/eventos/legenda. Verificado até o tick 185 do exemplo e após retrocesso; sem incluir futuro salvo. Não é captura da janela.
+- [x] Botão Exportar SVG na janela atual, independente do zoom aplicado ao canvas. A exportação recompõe todo o prefixo selecionado com o mesmo desenho.
+- [ ] Conectar o formulário do Qt Designer em `ui/` ao canvas/API existentes. Trabalho do layout é separado; a pasta não foi alterada nesta migração.
 - [ ] Distribuição sem instalação de runtime e teste fora do ambiente de desenvolvimento. O ambiente `.venv-windows` e `requirements.txt` são recursos de desenvolvimento, não uma entrega empacotada.
+- [ ] Investigar encerramento anormal intermitente (`0xC0000409`) observado ao fechar o executável experimental com configuração carregada. Build local criado e aberto, mas não estável nem validado em PC limpo; ver `EMPACOTAMENTO.md`.
 
 Apenas Projeto A. Reavaliar a interface com os casos da demonstração antes de afirmar atendimento integral do enunciado.

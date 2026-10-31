@@ -18,10 +18,12 @@ Este documento registra as decisões de implementação e as limitações aceita
 | `scheduler.py` | Ordenar candidatas por RM ou EDF e aplicar os desempates. Não executa ticks nem desenha a interface. |
 | `engine.py` | Processar ticks, executar tarefas, administrar CPUs, registrar eventos, navegar pelo histórico e aplicar edições. |
 | `parser.py` | Carregar o arquivo de configuração e devolver estado inicial, algoritmo e avisos. |
+| `gantt.py` | Converter o histórico em intervalos e desenhar a Figure com Matplotlib, sem Qt e sem executar ticks. |
+| `exporter.py` | Exportar o histórico selecionado em SVG vetorial; CLI para execução completa e exportação sem GUI. |
 | `gui.py` | Janela PySide6/QtWidgets, tabela, edição, controles e Gantt a partir dos snapshots. |
 | `test/test_*.py` | Verificar os comportamentos implementados. `test/__init__.py` permite descobrir a suíte a partir da raiz. |
 
-A primeira interface e o Gantt estão implementados com **PySide6/QtWidgets** em `gui.py`. Não usam QML nem biblioteca adicional de gráficos. `exporter.py` continua planejado; a exportação e o empacotamento não foram implementados. `requirements.txt` registra a versão de PySide6 exercitada no ambiente de desenvolvimento.
+A janela usa **PySide6/QtWidgets** e o Gantt usa **Matplotlib**. O redesenho do layout está separado desta migração e reservado ao trabalho em `ui/`. `gantt.py` contém o desenho compartilhado; `exporter.py` usa `Figure.savefig` para SVG sem capturar a janela nem construir XML manualmente. O empacotamento tem apenas um experimento anterior, não uma entrega final. `requirements.txt` registra as versões de PySide6 e Matplotlib exercitadas no ambiente de desenvolvimento.
 
 ## 3. Tarefas, CPUs e histórico
 
@@ -127,20 +129,25 @@ Campos disponíveis: `ingresso`, `duracao`, `periodo`, `prazo`, `cor` e `estado_
 - O registro de execução preserva qual CPU executou a tarefa, mesmo quando a conclusão libera a CPU ao final do intervalo.
 - A interface lê o motor e seu histórico, sem reimplementar RM/EDF ou alterar TCBs diretamente. Erros de carregamento preservam a simulação anterior e aparecem na janela.
 - A janela permite abrir arquivo, consultar tabela e avisos, avançar/retroceder, editar a tarefa selecionada e executar até o fim. Edição usa somente os campos alterados pela API do motor e mantém erros no diálogo.
-- O Gantt usa `QGraphicsScene`/`QGraphicsView`, com rolagem e zoom, IDs numéricos decrescentes, CPU nos blocos, suspensão preta hachurada, trilhas de CPU desligada, legenda e marcadores com timestamps/tooltips. Mostra somente o prefixo do histórico até o instante selecionado; retroceder não exibe o futuro salvo.
+- O Gantt usa Matplotlib (`Axes.broken_barh`, marcadores, eixos e legenda) em uma `Figure` reutilizada. A janela integra `FigureCanvasQTAgg` e a barra de navegação da biblioteca, em vez de reconstruir um gráfico em `QGraphicsScene`. Mantém IDs numéricos decrescentes, CPU nos blocos, suspensão hachurada, trilhas de CPU desligada e eventos nos ticks reais. Retroceder mostra somente o prefixo selecionado, sem futuro salvo.
 - Execução completa usa `QTimer` e lotes pequenos de chamadas a `avancar()` para devolver controle à janela. Os lotes não limitam a duração total da simulação. Os controles de alteração ficam desabilitados durante a execução e o Gantt é redesenhado ao final; fechar a janela interrompe o timer. A UI mantém as mesmas condições de parada e bloqueio da execução completa do motor.
-- Exportar o gráfico completo a partir dos dados/desenho, não capturar somente a parte visível da janela.
-- A biblioteca aceita é PySide6. O formato e a implementação da exportação integral ainda precisam ser definidos; a menção anterior a Tkinter no README foi substituída.
-- A entrega deve executar sem exigir que o destinatário instale Python ou bibliotecas. O empacotamento ainda precisa ser implementado e testado fora do ambiente de desenvolvimento.
+- Exportação em `exporter.py`, sem PySide6, mas com Matplotlib: `exportar_svg(simulacao, caminho)` cria uma Figure, chama o mesmo `desenhar_gantt` e usa `Figure.savefig` para gerar SVG. Não há mais escrita manual de XML. A API não modifica a simulação nem inclui futuro salvo. A CLI carrega, executa completamente e exporta; o botão Exportar SVG usa a API sem cortar pelo zoom atual da janela.
+- O gráfico usa cores históricas, CPU explícita, ociosidade, suspensão hachurada e marcadores de formatos distintos descritos na legenda. Agrupa apenas trechos contíguos da mesma tarefa/CPU/cor sem atravessar fronteiras de eventos. O Matplotlib cuida dos eixos, desenho e serialização vetorial; o projeto só faz a conversão dos registros do motor e define sua representação.
+- A biblioteca aceita é PySide6. SVG foi escolhido para a exportação vetorial, independente da janela; a menção anterior a Tkinter no README foi substituída.
+- **Revisão da interface:** a primeira janela é funcional, mas foi considerada confusa para a apresentação. Preservar o código atual como referência, sem rollback destrutivo. Não confundir testes aprovados com clareza de uso aprovada. Validar uma nova organização antes de reescrever a GUI.
+- Proposta em `prototipos/interface.html`: Gantt como área principal, parâmetros em uma área de configuração, detalhes somente da tarefa selecionada e composição de apresentação com menos distrações. A maquete usa dados reais do exemplo no tick 12, mas seus controles de simulação são ilustrativos; não é a aplicação nem uma troca de PySide6 por HTML.
+- Evitar tabela permanente de 13 colunas e log técnico competindo com o gráfico. Manter inspeção completa acessível em área secundária. Preservar os requisitos de estados, CPUs, eventos e legenda ao detalhar a proposta; a maquete não comprova que todos já foram acomodados.
+- SVG e estudo de empacotamento seguem em paralelo, sem depender da aparência da GUI atual. Um executável experimental da interface atual não deve ser apresentado como a entrega final aprovada.
+- A entrega deve executar sem exigir que o destinatário instale Python ou bibliotecas. Um bundle experimental Windows foi produzido com PyInstaller onedir; deve ser copiado como pasta inteira. Houve um encerramento anormal intermitente na revalidação local, e não foi testado em PC limpo. Não considerar o empacotamento finalizado; detalhes em `EMPACOTAMENTO.md`.
 
 ## 10. Verificação e próximos passos
 
 Os testes estão no diretório `test/`. Executar a suíte local a partir da raiz com:
 
 ```bash
-python -B -m unittest discover -q
+.venv-windows/Scripts/python.exe -B -m unittest discover -q
 ```
 
-Para exercitar também os testes da interface, usar o Python do ambiente com PySide6 (`.venv-windows/Scripts/python.exe` no Windows). Em interpretadores sem PySide6, os testes gráficos são ignorados e os testes do motor continuam disponíveis. Comandos de instalação e execução estão no README; `exemplos/configuracao.txt` permite testar o fluxo com duas CPUs e três tarefas.
+Usar o Python do ambiente com as dependências de `requirements.txt`: Matplotlib é necessário para os testes do Gantt/exportador e PySide6 para os testes da janela. Comandos de instalação e execução estão no README; `exemplos/configuracao.txt` permite testar o fluxo com duas CPUs e três tarefas.
 
-Próximo foco: avaliar a primeira interface com casos de uso e implementar a exportação integral e a distribuição. Manter sobreposição de ocorrências e valores padrão como questões abertas. Não adicionar recursos opcionais antes de concluir esse fluxo.
+Próximo foco: integrar o formulário do Qt Designer ao canvas Matplotlib e validar a organização com Pedro; depois refazer o empacotamento com as dependências atuais. A exportação integral já está implementada. Manter sobreposição de ocorrências e valores padrão como questões abertas.

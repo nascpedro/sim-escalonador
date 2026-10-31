@@ -9,12 +9,13 @@ import tempfile
 import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-TEM_QT = importlib.util.find_spec("PySide6") is not None
+TEM_QT = (importlib.util.find_spec("PySide6") is not None
+          and importlib.util.find_spec("matplotlib") is not None)
 if TEM_QT:
     from PySide6.QtWidgets import QApplication
 
 
-@unittest.skipUnless(TEM_QT, "PySide6 não instalado neste interpretador")
+@unittest.skipUnless(TEM_QT, "PySide6/Matplotlib não instalados neste interpretador")
 class TestInterface(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -37,10 +38,39 @@ class TestInterface(unittest.TestCase):
         self.app.processEvents()
         self.pasta.cleanup()
 
+    def test_canvas_matplotlib_reutilizado_na_navegacao(self):
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        self.assertIsInstance(self.janela.canvas, FigureCanvasQTAgg)
+        self.assertIs(self.janela.canvas.figure, self.janela.figura)
+        self.janela.carregar_arquivo(str(self.caminho))
+        figura = self.janela.figura
+        self.janela.avancar()
+        self.janela.retroceder()
+        self.assertIs(self.janela.figura, figura)
+        self.assertEqual(len(figura.axes), 1)
+
+    def test_exportacao_svg_independe_do_zoom_e_preserva_janela(self):
+        import xml.etree.ElementTree as ET
+        self.janela.carregar_arquivo(str(self.caminho))
+        self.janela.avancar()
+        self.janela.avancar()
+        self.janela.retroceder()
+        ax = self.janela.figura.axes[0]
+        ax.set_xlim(0.25, 0.75)
+        antes = ax.get_xlim()
+        saida = Path(self.pasta.name) / 'gantt.svg'
+        self.assertTrue(self.janela.exportar_arquivo(saida))
+        self.assertEqual(ET.parse(saida).getroot().tag, '{http://www.w3.org/2000/svg}svg')
+        self.assertEqual(ax.get_xlim(), antes)
+        self.assertEqual(self.janela.simulacao.instante_atual, 1)
+        self.assertFalse(self.janela.exportar_arquivo(Path(self.pasta.name) / 'inexistente' / 'x.svg'))
+        self.assertIn('SVG', self.janela.mensagem.text())
+
     def test_carregar_arquivo_real_e_controles(self):
         self.assertIsNone(self.janela.simulacao)
         self.assertFalse(self.janela.botao_avancar.isEnabled())
-        self.assertTrue(all(not b.isEnabled() for b in self.janela.botoes_zoom))
+        self.assertFalse(self.janela.barra_gantt.isEnabled())
+        self.assertFalse(self.janela.botao_exportar.isEnabled())
         self.assertTrue(self.janela.carregar_arquivo(str(self.caminho)))
         self.assertEqual(self.janela.tabela.rowCount(), 2)
         self.assertEqual(self.janela.tabela.item(0, 0).text(), "10")
@@ -61,13 +91,12 @@ class TestInterface(unittest.TestCase):
         self.assertEqual(self.janela.simulacao.instante_atual, 1)
         self.assertIn("tick 1", self.janela.resumo.text())
         self.assertEqual(self.janela.tabela.item(1, 1).text(), "EXECUTANDO")
-        blocos = [i for i in self.janela.cena.items() if i.data(0) == "execucao"]
-        self.assertEqual(len(blocos), 1)
-        self.assertIn("CPU 0", blocos[0].toolTip())
-        self.assertTrue(any(i.data(0) == "chegada" for i in self.janela.cena.items()))
+        ax = self.janela.figura.axes[0]
+        self.assertTrue(ax.has_data())
+        self.assertEqual(ax.get_xlim()[1], 1)
         self.janela.retroceder()
         self.assertEqual(self.janela.tabela.item(1, 1).text(), "AGUARDANDO")
-        self.assertFalse(any(i.data(0) == "execucao" for i in self.janela.cena.items()))
+        self.assertEqual(self.janela.figura.axes[0].get_xlim()[1], 1)
         self.assertEqual(len(self.janela.simulacao.historico), 2)
         self.janela.avancar()
         self.assertEqual(len(self.janela.simulacao.historico), 2)
@@ -176,18 +205,16 @@ class TestInterface(unittest.TestCase):
         self.caminho.write_text("RM;1;1\n2;36BFA6;0;3;4;1;\n10;579BFF;0;3;4;1;\na;FFAA22;20;1;30;3;\n", encoding="utf-8")
         self.janela.carregar_arquivo(str(self.caminho))
         self.janela.avancar()
-        tipos = {i.data(0) for i in self.janela.cena.items()}
-        self.assertTrue({"chegada", "ativacao", "sorteio", "fim_quantum", "perda_prazo"} <= tipos)
-        for item in self.janela.cena.items():
-            if item.data(0) in ("chegada", "ativacao", "sorteio"):
-                self.assertIn("t=0", item.toolTip())
-            if item.data(0) in ("fim_quantum", "perda_prazo"):
-                self.assertIn("t=1", item.toolTip())
+        from matplotlib.text import Text
+        textos = [t.get_text().casefold() for t in self.janela.figura.findobj(Text)]
+        for nome in ("Chegada", "Ativação", "Sorteio", "Fim de quantum", "Perda de prazo"):
+            self.assertTrue(any(nome.casefold() in texto for texto in textos), nome)
         self.assertEqual([self.janela.tabela.item(i, 0).text() for i in range(3)], ["10", "2", "a"])
         sim = self.janela.simulacao
         sim.modificar_tarefa_em_execucao(2, estado_tarefa=EstadoTarefa.SUSPENSA)
         self.janela.avancar()
-        self.assertTrue(any(i.data(0) == "suspensa" for i in self.janela.cena.items()))
+        self.assertEqual(self.janela.figura.axes[0].get_xlim()[1], 2)
+        self.assertIn("SUSPENSA", [self.janela.tabela.item(i, 1).text() for i in range(3)])
 
     def test_lotes_devolvem_controle_ao_qt_e_so_desenham_no_final(self):
         from PySide6.QtCore import QTimer
@@ -220,31 +247,23 @@ class TestInterface(unittest.TestCase):
         dialogo.accept()
         self.assertEqual(self.janela.simulacao.historico[0].tarefas[0].cor, "#AABBCC")
         self.janela.avancar()
-        bloco = next(i for i in self.janela.cena.items() if i.data(0) == "execucao")
-        self.assertEqual(bloco.brush().color().name(), "#aabbcc")
+        from matplotlib.colors import to_rgba
+        cores = [tuple(cor) for colecao in self.janela.figura.axes[0].collections
+                 for cor in colecao.get_facecolors()]
+        self.assertIn(to_rgba("#aabbcc"), cores)
         dialogo.deleteLater()
 
-    def test_redesenho_preserva_posicao_do_gantt(self):
-        self.caminho.write_text(
-            "RM;3;2\n1;2DD4BF;2;2;8;4;\n2;60A5FA;0;4;12;8;\n3;C084FC;0;5;20;12;\n",
-            encoding="utf-8",
-        )
-        self.janela.show()
-        self.app.processEvents()
+    def test_redesenho_nao_acumula_eixos_ou_troca_canvas(self):
         self.janela.carregar_arquivo(str(self.caminho))
-        self.janela.gantt.verticalScrollBar().setValue(0)
-        for _ in range(12):
+        canvas = self.janela.canvas
+        for _ in range(4):
             self.janela.avancar()
+            self.app.processEvents()
         self.janela.retroceder()
         self.janela.avancar()
-        from gui import DialogoEdicao
-        self.janela.tabela.selectRow(2)
-        dialogo = DialogoEdicao(self.janela, 1)
-        dialogo.campos['prazo'].setText('8')
-        dialogo.accept()
-        self.app.processEvents()
-        self.assertEqual(self.janela.gantt.verticalScrollBar().value(), 0)
-        dialogo.deleteLater()
+        self.assertIs(self.janela.canvas, canvas)
+        self.assertEqual(len(self.janela.figura.axes), 1)
+        self.assertEqual(self.janela.figura.axes[0].get_xlim()[1], 4)
 
 
 if __name__ == "__main__":

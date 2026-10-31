@@ -2,35 +2,42 @@
 
 A janela lê snapshots; somente Simulacao pode editar tarefas ou executar ticks.
 API de teste: carregar_arquivo(caminho), avancar(), retroceder(),
-executar_completa(), simulacao, tabela, cena e timer. O tipo dos itens do
-Gantt fica em data(0); os timestamps completos estão nos tooltips.
+executar_completa(), simulacao, tabela, figura, canvas e timer.
+O mesmo desenho Matplotlib é usado na janela e na exportação SVG.
 """
 import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QBrush, QColor, QPainter, QPen
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
-    QFormLayout, QGraphicsScene, QGraphicsView, QHeaderView, QHBoxLayout,
+    QFormLayout, QHeaderView, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QScrollArea, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from engine import Simulacao
 from models import EstadoTarefa
 from parser import carregar_configuracao
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.figure import Figure
+from gantt import desenhar_gantt
+from exporter import exportar_svg
 
 
-# Símbolo, cor e faixa vertical; eventos simultâneos usam faixas distintas.
-MARCADORES = {
-    "chegada": ("↓", "#50DCC1", 0, "Chegada"),
-    "ativacao": ("○", "#8EBBFF", 1, "Ativação"),
-    "conclusao": ("✓", "#50DCC1", 0, "Conclusão"),
-    "perda_prazo": ("!", "#FF7F91", 1, "Perda de prazo"),
-    "sorteio": ("◆", "#D1A5FF", 2, "Sorteio"),
-    "fim_quantum": ("|", "#FFD37A", 2, "Fim de quantum"),
+# Nomes do log; símbolos e posicionamento do gráfico pertencem a gantt.py.
+NOMES_EVENTOS = {
+    "chegada": "Chegada", "ativacao": "Ativação", "conclusao": "Conclusão",
+    "perda_prazo": "Perda de prazo", "sorteio": "Sorteio", "fim_quantum": "Fim de quantum",
+    "execucao": "Execução", "cpu_desligada": "CPU desligada",
 }
+
+
+class BarraGantt(NavigationToolbar2QT):
+    # O botão próprio exporta o histórico inteiro, não só a área ampliada pelo zoom.
+    toolitems = [item for item in NavigationToolbar2QT.toolitems if item[3] != 'save_figure']
+
 
 ESTILO = """
 QWidget { background: #101720; color: #E7EDF6; font: 10pt 'Segoe UI'; }
@@ -41,7 +48,7 @@ QPushButton { background: #223249; border: 1px solid #405974; border-radius: 6px
 QPushButton:hover { background: #304964; border-color: #60D4C2; }
 QPushButton:disabled { color: #6B7C90; background: #18212D; border-color: #273444; }
 QPushButton#primario { background: #176E68; border-color: #3DBDAA; }
-QTableWidget, QPlainTextEdit, QGraphicsView { background: #131D2A; border: 1px solid #304255; border-radius: 5px; }
+QTableWidget, QPlainTextEdit, QScrollArea { background: #131D2A; border: 1px solid #304255; border-radius: 5px; }
 QTableWidget { gridline-color: #28384A; alternate-background-color: #192638; selection-background-color: #254F64; }
 QTableWidget::item:selected { background: #254F64; color: #F0F6FF; }
 QTableWidget::item:focus { outline: none; }
@@ -53,10 +60,7 @@ QLineEdit, QComboBox { padding: 6px; border: 1px solid #405974; border-radius: 4
 
 def texto_evento(evento):
     tipo = evento["tipo"]
-    if tipo in MARCADORES:
-        nome = MARCADORES[tipo][3]
-    else:
-        nome = {"execucao": "Execução", "cpu_desligada": "CPU desligada"}.get(tipo, tipo)
+    nome = NOMES_EVENTOS.get(tipo, tipo)
     detalhes = ", ".join(f"{chave}={valor}" for chave, valor in evento.items() if chave not in ("tipo", "tick"))
     return f"t={evento['tick']} · {nome} · {detalhes}"
 
@@ -163,7 +167,9 @@ class JanelaSimulador(QMainWindow):
         self.botao_editar.clicked.connect(self.editar_selecionada)
         self.botao_completa = QPushButton("Execução completa")
         self.botao_completa.clicked.connect(self.executar_completa)
-        for botao in (self.botao_abrir, self.botao_retroceder, self.botao_avancar, self.botao_completa, self.botao_editar):
+        self.botao_exportar = QPushButton("Exportar SVG…")
+        self.botao_exportar.clicked.connect(lambda: self.escolher_exportacao())
+        for botao in (self.botao_abrir, self.botao_retroceder, self.botao_avancar, self.botao_completa, self.botao_editar, self.botao_exportar):
             controles.addWidget(botao)
         controles.addStretch()
         self.layout.addLayout(controles)
@@ -188,25 +194,15 @@ class JanelaSimulador(QMainWindow):
         painel_gantt = QWidget()
         gantt_layout = QVBoxLayout(painel_gantt)
         gantt_layout.setContentsMargins(0, 0, 0, 0)
-        barra = QHBoxLayout()
-        barra.addWidget(QLabel("LINHA DO TEMPO   /   tarefas em ordem decrescente de ID"))
-        barra.addStretch()
-        self.botoes_zoom = []
-        for texto, fator in (("− Zoom", 1 / 1.2), ("+ Zoom", 1.2)):
-            botao = QPushButton(texto)
-            self.botoes_zoom.append(botao)
-            botao.clicked.connect(lambda checked=False, f=fator: self.zoom(f))
-            barra.addWidget(botao)
-        gantt_layout.addLayout(barra)
-        self.cena = QGraphicsScene(self)
-        self.gantt = QGraphicsView(self.cena)
-        self.gantt.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.gantt.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.gantt.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        gantt_layout.addWidget(QLabel("LINHA DO TEMPO · Matplotlib · número no bloco = CPU"))
+        self.figura = Figure(figsize=(11, 5), dpi=100)
+        self.canvas = FigureCanvasQTAgg(self.figura)
+        self.barra_gantt = BarraGantt(self.canvas, self)
+        gantt_layout.addWidget(self.barra_gantt)
+        self.gantt = QScrollArea()
+        self.gantt.setWidgetResizable(True)
+        self.gantt.setWidget(self.canvas)
         gantt_layout.addWidget(self.gantt, 1)
-        legenda = QLabel("Execução: cor da tarefa + CPU   ·   Pronta/aguardando: sem preenchimento   ·   Suspensa: preto hachurado\n" + "   ·   ".join(f"{v[0]} {v[3]}" for v in MARCADORES.values()) + "   ·   CPU desligada: faixa cinza")
-        legenda.setWordWrap(True)
-        gantt_layout.addWidget(legenda)
         self.divisor.addWidget(painel_gantt)
         self.eventos = QPlainTextEdit()
         self.eventos.setReadOnly(True)
@@ -242,9 +238,26 @@ class JanelaSimulador(QMainWindow):
         self.avisos.setVisible(bool(avisos))
         self.tabela.clearSelection()
         self.tabela.setCurrentCell(-1, -1)
-        self.gantt.resetTransform()
+        self.barra_gantt.update()
         self.mensagem.setText("\n".join(avisos) or f"Arquivo carregado: {Path(caminho).name}")
         self.atualizar()
+        return True
+
+    def escolher_exportacao(self):
+        caminho, _ = QFileDialog.getSaveFileName(self, "Exportar Gantt", "gantt.svg", "SVG (*.svg)")
+        if caminho:
+            self.exportar_arquivo(caminho)
+
+    def exportar_arquivo(self, caminho):
+        """Exporta todo o histórico selecionado, independentemente do zoom da tela."""
+        if self.simulacao is None:
+            return False
+        try:
+            destino = exportar_svg(self.simulacao, caminho)
+        except (OSError, ValueError) as erro:
+            self.mensagem.setText(f"Erro ao exportar SVG: {erro}")
+            return False
+        self.mensagem.setText(f"SVG exportado: {destino}")
         return True
 
     def avancar(self):
@@ -258,11 +271,6 @@ class JanelaSimulador(QMainWindow):
             return
         self.simulacao.retroceder()
         self.atualizar()
-
-    def zoom(self, fator):
-        escala = self.gantt.transform().m11() * fator
-        if 0.25 <= escala <= 4:
-            self.gantt.scale(fator, fator)
 
     def editar_selecionada(self):
         item = self.tabela.item(self.tabela.currentRow(), 0)
@@ -328,14 +336,18 @@ class JanelaSimulador(QMainWindow):
         self.botao_retroceder.setEnabled(livre and carregada and self.simulacao.instante_atual > 0)
         self.botao_editar.setEnabled(livre and carregada and self.tabela.currentRow() >= 0)
         self.tabela.setEnabled(livre)
-        for botao in self.botoes_zoom:
-            botao.setEnabled(livre and carregada)
+        self.barra_gantt.setEnabled(livre and carregada)
+        self.botao_exportar.setEnabled(livre and carregada)
 
     def atualizar(self):
         self.atualizar_controles()
         if self.simulacao is None:
-            self.cena.clear()
-            self._texto(24, 24, "Abra um arquivo para visualizar tarefas, CPUs e a linha do tempo.", "#A9BBD0")
+            self.figura.clear()
+            ax = self.figura.add_subplot()
+            ax.text(0.5, 0.5, "Abra um arquivo para visualizar a linha do tempo.",
+                    ha="center", va="center", transform=ax.transAxes)
+            ax.set_axis_off()
+            self.canvas.draw_idle()
             return
         estado = self.simulacao.historico[self.simulacao.instante_atual]
         concluidas = sum(t.instancias_concluidas for t in estado.tarefas)
@@ -361,77 +373,12 @@ class JanelaSimulador(QMainWindow):
         self.eventos.setPlainText("\n".join(texto_evento(e) for e in estado.eventos) or "Nenhum evento neste snapshot.")
         self.desenhar_gantt()
 
-    def _texto(self, x, y, texto, cor="#D8E2F0"):
-        item = self.cena.addSimpleText(str(texto))
-        item.setBrush(QColor(cor))
-        item.setPos(x, y)
-        return item
-
     def desenhar_gantt(self):
-        """Lê só o prefixo visível; execução vem do evento, não da CPU final.
+        """A janela só fornece o estado; gantt.py desenha a mesma Figure usada na exportação."""
+        desenhar_gantt(self.simulacao, self.figura)
+        self.barra_gantt.update()
+        self.canvas.draw_idle()
 
-        Suspensão usa o estado anterior ao intervalo. Cada bloco mantém sua CPU.
-        """
-        self.cena.clear()
-        sim = self.simulacao
-        estado = sim.historico[sim.instante_atual]
-        tarefas = tarefas_ordenadas(estado.tarefas)
-        esquerda, topo, passo, altura = 140, 38, 52, 86
-        linhas = {t.id: topo + i * altura for i, t in enumerate(tarefas)}
-        fim = max(1, estado.tick)
-        fundo = topo + len(tarefas) * altura + len(estado.cpus) * 32
-        for tick in range(fim + 1):
-            x = esquerda + tick * passo
-            self.cena.addLine(x, topo - 6, x, fundo, QPen(QColor("#2B3B4E")))
-            self._texto(x - 5, 8, tick, "#97AFC9")
-        for tarefa in tarefas:
-            y = linhas[tarefa.id]
-            self._texto(8, y + 42, f"Tarefa {tarefa.id}", tarefa.cor)
-            self.cena.addLine(esquerda, y + 72, esquerda + fim * passo, y + 72, QPen(QColor("#28384A")))
-        cpus_y = {c.id_cpu: topo + len(tarefas) * altura + i * 32 for i, c in enumerate(estado.cpus)}
-        for cpu in estado.cpus:
-            self._texto(8, cpus_y[cpu.id_cpu] + 3, f"CPU {cpu.id_cpu} deslig.", "#A1ADBC")
-        for indice in range(1, sim.instante_atual + 1):
-            snapshot = sim.historico[indice]
-            anterior = sim.historico[indice - 1]
-            for tarefa in anterior.tarefas:
-                if tarefa.estado_tarefa == EstadoTarefa.SUSPENSA:
-                    bloco = self.cena.addRect(esquerda + anterior.tick * passo, linhas[tarefa.id] + 42, passo, 26,
-                                              QPen(QColor("#8090A0")), QBrush(QColor("#000000")))
-                    hachura = self.cena.addRect(bloco.rect(), QPen(Qt.PenStyle.NoPen), QBrush(QColor("#94A3B8"), Qt.BrushStyle.BDiagPattern))
-                    hachura.setToolTip(f"Tarefa {tarefa.id} suspensa · [{anterior.tick}, {snapshot.tick})")
-                    bloco.setData(0, "suspensa")
-                    bloco.setToolTip(hachura.toolTip())
-            cores = {t.id: t.cor for t in snapshot.tarefas}
-            for evento in snapshot.eventos:
-                tipo, tick = evento["tipo"], evento["tick"]
-                x = esquerda + tick * passo
-                if tipo == "execucao":
-                    identificador, cpu = evento["id_tarefa"], evento["id_cpu"]
-                    bloco = self.cena.addRect(x, linhas[identificador] + 42, passo, 26, QPen(QColor("#0C1520")), QBrush(QColor(cores[identificador])))
-                    bloco.setToolTip(f"Tarefa {identificador} · CPU {cpu} · [{tick}, {tick + 1})")
-                    bloco.setData(0, tipo)
-                    rotulo = self._texto(x + 4, linhas[identificador] + 45, f"CPU {cpu}", "#08131E")
-                    rotulo.setToolTip(bloco.toolTip())
-                elif tipo == "cpu_desligada":
-                    bloco = self.cena.addRect(x, cpus_y[evento["id_cpu"]] + 3, passo, 22, QPen(QColor("#526176")), QBrush(QColor("#384556"), Qt.BrushStyle.Dense4Pattern))
-                    bloco.setData(0, tipo)
-                    bloco.setToolTip(f"CPU {evento['id_cpu']} desligada · [{tick}, {tick + 1})")
-                elif tipo in MARCADORES:
-                    simbolo, cor, faixa, _ = MARCADORES[tipo]
-                    ids = evento.get("selecionadas", []) if tipo == "sorteio" else [evento["id_tarefa"]]
-                    for identificador in ids:
-                        y = linhas[identificador] + faixa * 12
-                        marcador = self._texto(x, y, simbolo, cor)
-                        marcador.setPos(x - marcador.boundingRect().width() / 2, y)
-                        marcador.setData(0, tipo)
-                        marcador.setToolTip(texto_evento(evento))
-                        marcador.setZValue(2)
-        if not tarefas:
-            self._texto(esquerda, fundo + 8, "Nenhuma tarefa periódica incluída. Consulte os avisos abaixo.", "#A9BBD0")
-        self.cena.setSceneRect(0, 0, esquerda + fim * passo + 70, max(fundo + 20, 180))
-        # Inclui rótulos compridos e a mensagem de lista vazia na área rolável.
-        self.cena.setSceneRect(self.cena.sceneRect().united(self.cena.itemsBoundingRect().adjusted(-8, -4, 20, 16)))
 
 
 def main():

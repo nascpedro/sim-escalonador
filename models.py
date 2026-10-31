@@ -1,4 +1,13 @@
+from dataclasses import dataclass
 from enum import Enum, auto
+
+
+@dataclass
+class Ocorrencia:
+    """Uma ativação que espera a ocorrência anterior da mesma tarefa terminar."""
+    ativacao: int
+    prazo_absoluto: int
+    perdeu_prazo: bool = False
 
 #Definições das classes representando dados a serem usados na simulação (TCB, CPU, Estado/Snapshot)
 
@@ -21,6 +30,9 @@ class TCB:
         self.prazo_absoluto = ingresso + prazo
         self.instancias_concluidas = 0 
         self.perdeu_prazo = False
+        # A ocorrência atual usa os campos acima. As demais esperam em FIFO;
+        # nunca executamos duas ocorrências da mesma tarefa em CPUs diferentes.
+        self.ocorrencias_pendentes = []
 
 
 class EstadoTarefa(Enum):
@@ -42,6 +54,7 @@ class EstadoSimulacao:
         self.tarefas = tarefas
         self.cpus = cpus
         self.quantum = quantum
+        self.algoritmo = None  # preenchido por Simulacao; acompanha o histórico
         # Eventos do intervalo que produziu este estado; os anteriores ficam no histórico.
         self.eventos = []
 

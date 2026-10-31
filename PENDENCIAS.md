@@ -1,44 +1,48 @@
 # Pendências do Projeto A
 
-Este arquivo acompanha o escopo; item em aberto não significa requisito atendido.
+Ponto de entrada para estudar e apresentar: README.md. Decisões do modelo: docs.md.
+Este arquivo descreve o estado atual; os diagnósticos anteriores da interface e do
+primeiro build estão preservados como histórico nos documentos específicos.
 
-## Rodada atual
+## Requisitos ainda abertos
 
-- [x] Parser: carregar arquivo texto UTF-8, validar formato e parâmetros e informar tarefas aperiódicas ignoradas. API: carregar_configuracao(caminho) retorna (estado_inicial, algoritmo, avisos). Valores padrão continuam pendentes, não há interface de seleção de arquivo.
-- [x] Motor: registrar ingresso inicial e ativações periódicas com os instantes corretos, preservando o histórico.
+- [ ] **Valores padrão (3.2):** sugerir valores para todas as características, com
+  substituição explícita pelo usuário. Exemplos e valores iniciais de alguns
+  controles não cobrem todo o requisito. O parser rejeita dados ausentes;
+  não preenche silenciosamente arquivos inválidos.
+- [ ] **Conjunto de tarefas em execução (3.1):** implementar inclusão/remoção com
+  validação e sem alterar snapshots anteriores. A edição individual trata
+  tarefas já carregadas. Carregar outro arquivo reinicia a simulação.
+- [ ] **Homologação da distribuição (geral 5):** testar o ZIP em Windows x64 limpo,
+  sem Python/Qt/ferramentas instalados. A verificação local com PATH restrito não
+  substitui uma máquina limpa. Detalhes em EMPACOTAMENTO.md.
+- [ ] **Ensaio do autor:** abrir um arquivo próprio e explicar um cenário RM e EDF,
+  a fila de ocorrências, uma perda de prazo, edição/retrocesso e a exportação final.
 
-## Próximas pendências do motor
+## Implementado e coberto por testes
 
-- [x] Edição por campos: `modificar_tarefa_em_execucao(id_tarefa, **alteracoes)`. Campos disponíveis: ingresso, duracao, periodo, prazo, cor e estado_tarefa. Valida somente as entradas e sua compatibilidade com a ocorrência atual. CPU e prazo absoluto são administrados pelo motor, não enviados pelo usuário. Rejeição preserva o estado e o futuro; aceitação copia a tarefa, sincroniza CPUs e descarta só o futuro. O parser permanece responsável pela entrada do arquivo.
+- [x] Ticks, múltiplas CPUs, fila global, RM/EDF preemptivos e desempates.
+- [x] Histórico completo, reprodução dos sorteios e edição individual validada.
+- [x] Ocorrências sobrepostas em FIFO por tarefa, com ativação e prazo preservados.
+- [x] Perda de prazo também durante a espera; dez conclusões sem descartar ativações
+  dentro do conjunto admitido; somente uma ocorrência da tarefa executa por vez.
+- [x] Configuração global validada no motor; operação sem mudanças preserva futuro;
+  RM/EDF, quantum e CPUs restaurados pelo histórico; redução de CPUs reinicia fatias.
+- [x] Campos de configuração não truncam números por limites de QSpinBox.
+- [x] Gantt agrupado, CPU identificada no zoom, eventos recortados, legenda única,
+  barra temporal e rolagem vertical. Ordem física dos IDs verificada.
+- [x] Sorteio associado somente às tarefas selecionadas, inclusive múltiplas CPUs.
+- [x] SVG vetorial integral independente do zoom e da janela, pela GUI e CLI.
+- [x] Imagem final automática, inclusive pelo último passo manual, preservando
+  arquivos existentes e resultados quando há falha de escrita.
+- [x] Parser de arquivos externos, avisos de aperiódicas e erros com motivo/linha.
+- [x] Exemplos das figuras 2.5 e 2.6 do capítulo reproduzidos em testes.
+- [x] Script de build inclui .ui, dependências, exemplo e instruções no ZIP.
 
-### Semântica da edição
+## Convenções a explicar
 
-- Trocar entre PRONTA, EXECUTANDO e SUSPENSA preserva o progresso e o instante da ativação atual. EXECUTANDO exige CPU livre ou a própria CPU, escolhida pelo motor.
-- Colocar uma ocorrência ativa em AGUARDANDO abandona seu progresso sem contabilizar conclusão e espera uma próxima ativação. Sair de AGUARDANDO para um estado ativo inicia uma ocorrência no tick atual, desde que a tarefa já tenha ingressado.
-- Alterar prazo recalcula o prazo absoluto a partir da ativação atual; eventual perda pelo novo prazo será verificada no próximo tick. Alterar ingresso não pode colocá-lo depois de uma ativação que ainda está em curso. Alterar período passa a orientar as próximas ativações, sem reiniciar a ocorrência atual.
-- FINALIZADA corresponde às dez ocorrências concluídas pelo motor. ID e campos internos (CPU, progresso, contadores e indicadores) não fazem parte da entrada editável.
-
-### Ainda pendente no motor
-
-- [x] Quantum em RM/EDF: a seleção continua a cada tick, após chegadas/ativações e antes de executar o intervalo, sem aguardar a fatia acabar para permitir preempção. `tempo_exec_quantum` contabiliza execução contínua por tarefa (inclusive migração entre CPUs sem interrupção). Ao esgotar a fatia, registra `fim_quantum` em t+1 e zera o contador; no próximo tick, no mesmo instante t+1, a tarefa disputa novamente e pode continuar. Preserva o desempate de quem executava. Preempção, conclusão ou saída manual de EXECUTANDO reiniciam a fatia, sem apagar o progresso da ocorrência. Conclusão no limite do quantum tem precedência e não gera expiração redundante. Convenção do simulador: quantum=0 não limita a fatia. Histórico preserva contadores e eventos. Não foi adicionado modo sem preempção.
-- [ ] Confirmar com o professor o tratamento das ativações sobrepostas. Decisão provisória: manter a nova ativação ignorada enquanto houver ocorrência anterior ativa, sem reiniciar seu progresso, prazo ou quantum, e seguir para a interface. Não é conformidade garantida nem bloqueio para iniciar a interface; ver `docs.md`, seção 6. Não rejeitar duração ou prazo maior que período para esconder o caso.
-
-## Pontos a verificar com o parser
-
-- [ ] Confirmar política de valores padrão exigida pelo requisito 3.2; o enunciado não especifica os valores concretos. Não preencher silenciosamente campos inválidos.
-- [x] Integrar o resultado do carregamento ao motor e verificar execução completa e passo a passo com arquivos reais, incluindo retrocesso.
-- [x] Manter mensagens de erro e avisos disponíveis para a futura interface, sem implementar Projeto B.
-- [x] Alinhar as anotações de tipo de IDs em TCB e edição com o parser: int ou str.
-
-## Ainda fora desta rodada
-
-- [x] Primeira interface PySide6: abrir arquivo, mostrar tarefas/avisos, avançar/retroceder, editar tarefa selecionada e executar até o fim em lotes Qt, sem alterar regras do motor.
-- [x] Gantt compartilhado com Matplotlib: `gantt.py` lê o histórico, desenha intervalos com `broken_barh` e marcadores. A janela usa `FigureCanvasQTAgg`; o SVG usa `Figure.savefig`. Removidos o desenho manual de Graphics View e a geração manual de XML. CPU, estados, ordem dos IDs e prefixo selecionado preservados.
-- [ ] Redesenhar a interface para apresentação: primeira versão funcional considerada confusa. Validar organização do Gantt, configuração e inspeção antes de reescrever; proposta exploratória em `prototipos/interface.html`. Preservar GUI atual enquanto isso.
-- [x] Exportação SVG independente da GUI: API sem mutação e CLI para carregar, executar completamente e gerar o gráfico inteiro, com CPUs/estados/eventos/legenda. Verificado até o tick 185 do exemplo e após retrocesso; sem incluir futuro salvo. Não é captura da janela.
-- [x] Botão Exportar SVG na janela atual, independente do zoom aplicado ao canvas. A exportação recompõe todo o prefixo selecionado com o mesmo desenho.
-- [ ] Conectar o formulário do Qt Designer em `ui/` ao canvas/API existentes. Trabalho do layout é separado; a pasta não foi alterada nesta migração.
-- [ ] Distribuição sem instalação de runtime e teste fora do ambiente de desenvolvimento. O ambiente `.venv-windows` e `requirements.txt` são recursos de desenvolvimento, não uma entrega empacotada.
-- [ ] Investigar encerramento anormal intermitente (`0xC0000409`) observado ao fechar o executável experimental com configuração carregada. Build local criado e aberto, mas não estável nem validado em PC limpo; ver `EMPACOTAMENTO.md`.
-
-Apenas Projeto A. Reavaliar a interface com os casos da demonstração antes de afirmar atendimento integral do enunciado.
+quantum=0 remove o limite de fatia e mantém a preempção. Expiração de quantum não
+obriga rodízio: RM/EDF são reavaliados a cada tick. Suspensão é manual no Projeto A.
+AGUARDANDO abandona a ocorrência atual e sua fila, sem contar conclusões. As regras
+de edição de duração, prazo e período estão em docs.md. Não incluir os servidores,
+eventos de mutex/E/S ou tarefas aperiódicas/esporádicas do Projeto B nesta entrega.

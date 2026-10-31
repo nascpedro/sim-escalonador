@@ -3,7 +3,30 @@
 
 Simulador de escalonamento preemptivo multiprocessador com foco em sistemas de tempo real periódicos (Rate Monotonic e Earliest Deadline First), com suporte a múltiplos núcleos e controle de avançar e retroceder a simulação (time-travel debugging).
 
-Decisões, convenções e limitações atuais: [docs.md](docs.md). O que falta implementar: [PENDENCIAS.md](PENDENCIAS.md). A primeira interface PySide6 está em `gui.py` e está sendo repensada; a exportação SVG independente está em `exporter.py`.
+Comece por este README para executar e apresentar o **Projeto A**. [docs.md](docs.md) registra as decisões; [PENDENCIAS.md](PENDENCIAS.md) acompanha os requisitos ainda abertos. [REVISAO_INTERFACE.md](REVISAO_INTERFACE.md) e [EMPACOTAMENTO.md](EMPACOTAMENTO.md) guardam o histórico técnico dessas frentes; não são pré-requisitos para entender o fluxo principal.
+
+## Roteiro curto para apresentar o Projeto A
+
+O programa lê tarefas periódicas de um arquivo, decide quem recebe CPU a cada tick e guarda uma cópia do estado para permitir avançar, retroceder e editar. RM prioriza o menor período; EDF prioriza o prazo absoluto mais próximo. Após dez ocorrências concluídas por tarefa, a execução completa termina.
+
+Leia o código nesta ordem:
+
+1. `models.py`: quais dados uma tarefa, uma CPU e um estado guardam.
+2. `scheduler.py`: como ordenar as candidatas e desempatar.
+3. `engine.py`: `avancar()` calcula ou recupera um estado; `_executar_um_tick()` chama as etapas de ativação, despacho, execução e verificação de prazos. A fila de ocorrências fica no TCB. `retroceder()` move o índice do histórico.
+4. `parser.py`: `carregar_configuracao()` lê as linhas, `_ler_cabecalho()` interpreta o sistema e `_ler_tarefa()` interpreta cada tarefa. O carregador verifica duplicidades e avisa sobre aperiódicas ignoradas.
+5. `gui.py`: `_conectar_sinais()` liga os botões às operações; `atualizar()` mostra o snapshot selecionado.
+6. `gantt.py` e `exporter.py`: os eventos viram intervalos; Matplotlib desenha e salva SVG.
+
+**Ferramentas utilizadas:** PySide6 fornece a janela e os controles; o formulário visual está em `ui/janela_principal.ui`, editável no Qt Designer. Matplotlib fornece gráfico, barra de navegação e exportação SVG. O parser usa a biblioteca padrão do Python. A lógica específica do simulador está no motor e no escalonador.
+
+Para a demonstração, abra `exemplos/configuracao.txt`, avance alguns ticks, retroceda, selecione e edite uma tarefa, avance para recalcular, execute até o fim e exporte o SVG. Sem edições, o exemplo termina no tick 185. Uma edição aceita descarta os estados futuros, preservando os anteriores. O zoom altera somente a visualização.
+
+Para explicar RM e EDF, compare `exemplos/rm-perda-prazo.txt` e `exemplos/edf-prazos.txt`: são os dados da figura 2.6 do capítulo, com IDs 1 e 2 para A e B. Até o tick 60, RM perde o prazo da tarefa 2 no tick 50; EDF não perde prazos. `exemplos/sobreposicao.txt` mostra uma tarefa de duração 5 e período 3: as ocorrências esperam em fila, e a tarefa conclui dez vezes no tick 50 usando somente uma das duas CPUs.
+
+**Limites a declarar:** sugestões completas de valores padrão e inclusão/remoção de tarefas durante a execução ainda estão pendentes; a distribuição Windows precisa de homologação em máquina limpa. O SVG final é gerado automaticamente ao lado da configuração, com sufixo numérico para preservar arquivos existentes. Falhas de escrita permitem exportar novamente para outro destino.
+
+Na simplificação para a apresentação foram retirados o modo apresentação e o acompanhamento automático do tick. Permanecem zoom, barra temporal, rolagem vertical e exportação integral. A retirada desses opcionais não resolve as pendências acima.
 
 ---
 
@@ -23,7 +46,7 @@ O ambiente `.venv-windows` fica separado de uma eventual `.venv` criada em outro
 .\.venv-windows\Scripts\python.exe gui.py exemplos/configuracao.txt
 ```
 
-O exemplo inclui duas CPUs, três tarefas e quantum 3. A janela permite carregar outro arquivo, navegar pelo histórico, executar até o fim, editar uma tarefa pela API do motor e exportar SVG. O Gantt é Matplotlib integrado ao PySide6 por `FigureCanvasQTAgg`, com a barra de navegação da biblioteca. Não há desenho manual paralelo em Graphics View.
+O exemplo inclui duas CPUs, três tarefas e quantum 3. A janela permite carregar outro arquivo, navegar pelo histórico, executar até o fim, editar uma tarefa pela API do motor e exportar SVG. Ao concluir, gera também o SVG final ao lado da configuração, sem sobrescrever arquivos existentes. O Gantt é Matplotlib integrado ao PySide6 por `FigureCanvasQTAgg`, com a barra de navegação da biblioteca. Não há desenho manual paralelo em Graphics View.
 
 Os testes ficam em `test/`. Execute a partir da raiz, incluindo a interface em modo offscreen:
 
@@ -31,7 +54,9 @@ Os testes ficam em `test/`. Execute a partir da raiz, incluindo a interface em m
 .\.venv-windows\Scripts\python.exe -B -m unittest discover -v
 ```
 
-Esses comandos são para **desenvolvimento**. A distribuição final sem instalar Python/bibliotecas no computador de destino ainda está pendente. O experimento de empacotamento e suas limitações estão em [EMPACOTAMENTO.md](EMPACOTAMENTO.md).
+Esses comandos são para **desenvolvimento**. A distribuição Windows é gerada por `powershell -ExecutionPolicy Bypass -File scripts/empacotar.ps1`. Extraia o ZIP inteiro de `dist/SimuladorSO-windows-x64.zip` e abra `SimuladorSO.exe`. A validação local e a limitação de não haver teste em máquina limpa estão em [EMPACOTAMENTO.md](EMPACOTAMENTO.md).
+
+Para preparar a máquina de build, instale `requirements-build.txt` no mesmo ambiente Python 3.11. O script não instala nada; gera a pasta, verifica a exportação empacotada e só então atualiza o ZIP. Os arquivos de `build/` e `dist/` ficam fora do Git.
 
 ## Exportar o Gantt em SVG
 
@@ -41,7 +66,7 @@ A exportação não depende da aparência da janela nem de PySide6: usa a mesma 
 .\.venv-windows\Scripts\python.exe exporter.py exemplos/configuracao.txt gantt.svg
 ```
 
-Esse comando carrega a configuração, executa a simulação completa e grava o gráfico vetorial inteiro. Abra `gantt.svg` em um navegador ou editor vetorial; simulações longas produzem um gráfico largo para navegar com zoom, sem cortar o histórico.
+Esse comando carrega a configuração, executa a simulação completa e grava toda a linha do tempo no SVG. Abra `gantt.svg` em um navegador ou editor vetorial e use seu zoom para inspecionar os detalhes. O gráfico inclui todo o intervalo temporal; isso não garante legibilidade de todos os detalhes na escala reduzida.
 
 A API `exportar_svg(simulacao, caminho)` não executa ticks nem altera a simulação. Exporta até o instante selecionado; após retroceder, não inclui o futuro salvo. O exemplo completo termina no tick 185. Erros de entrada/escrita são informados no terminal. O diretório de destino deve existir.
 
@@ -54,7 +79,9 @@ O SVG inclui identificação de CPU, ociosidade, suspensão hachurada, marcadore
 - `gui.py` apresenta uma `Figure` dentro do Qt com `FigureCanvasQTAgg`.
 - `exporter.py` chama o mesmo desenho e `Figure.savefig(..., format='svg')`. O Matplotlib gera o SVG; não há construção manual de XML.
 
-Para integrar ao formulário do Qt Designer, coloque o canvas em `graficoContainer`, crie uma `Figure` uma única vez e atualize com `desenhar_gantt(simulacao, figura)` seguido de `canvas.draw_idle()`. O desenho não executa ticks nem modifica o histórico. A pasta `ui/` do trabalho paralelo não é modificada por esta migração.
+A integração já está em `gui.py`: `QUiLoader` carrega o formulário, o canvas é inserido em `graficoContainer` e a mesma `Figure` é atualizada por `desenhar_gantt(simulacao, figura)` e `canvas.draw_idle()`. Não é necessário gerar `ui_janela_principal.py` para executar. Mantenha `ui/janela_principal.ui` junto do projeto.
+
+**Navegação do gráfico — etapa 1 implementada:** use **+ Zoom** para aproximar e a barra horizontal abaixo do gráfico para percorrer o tempo sem avançar a simulação. **Ajustar tudo** mostra novamente todo o prefixo selecionado. O zoom é preservado ao avançar/retroceder, ajustando apenas o que ultrapassar o instante selecionado. Quando o gráfico for alto, use a rolagem vertical para acessar as demais trilhas e a legenda ao final. A legenda é única e os eventos fora do intervalo visível são recortados. A configuração global passa pela API do motor e seu algoritmo acompanha o histórico.
 
 ## 1. Como a Simulação Funciona: O Ciclo do Tick `[t, t+1)`
 
@@ -62,6 +89,7 @@ A simulação avança em ticks inteiros discretos ($t = 0, 1, 2, \dots$). Toda o
 
 * **No instante $t$ (Decisão):**
   * Chegada de novas instâncias periódicas ($t \ge \text{ingresso}$ e no início do período).
+  * Se a anterior estiver pendente, a nova ocorrência entra na fila FIFO da tarefa, preservando ativação e prazo.
   * Definição do prazo absoluto ($d = t + \text{prazo}$).
   * Ordenação da fila global de tarefas prontas pelo algoritmo escolhido (RM ou EDF).
   * Alocação das tarefas com maior prioridade nos processadores livres (nenhum núcleo fica ocioso se houver tarefa pronta). Núcleos sem tarefa são marcados como desligados.
@@ -69,8 +97,8 @@ A simulação avança em ticks inteiros discretos ($t = 0, 1, 2, \dots$). Toda o
   * Cada tarefa alocada executa 1 unidade de tempo.
   * CPUs sem tarefas acumulam 1 tick de ociosidade/desligamento.
 * **No instante $t+1$ (Conclusão e Verificação):**
-  * Tarefas que atingiram a duração encerram sua instância e aguardam o próximo período (terminam em definitivo após 10 execuções).
-  * Tarefas ativas que atingiram o prazo limite sem terminar marcam perda de prazo (continuam executando até terminar a duração, sem serem abortadas).
+  * Tarefas que atingiram a duração encerram sua ocorrência e tornam pronta a próxima pendente, ou aguardam o próximo período. Terminam em definitivo após 10 conclusões.
+  * Ocorrências atuais ou pendentes que atingiram o prazo limite sem terminar marcam perda de prazo (continuam executando até terminar a duração, sem serem abortadas).
   * O relógio avança para $t+1$ e o estado é salvo no histórico.
 
 ---
@@ -125,6 +153,8 @@ simulador_so/
 ├── gantt.py        # Desenho Matplotlib compartilhado pela tela e exportação
 ├── exporter.py     # Exportação SVG vetorial independente da janela + CLI
 ├── gui.py          # Interface PySide6/QtWidgets com Gantt e inspeção do estado
+├── ui/             # Formulário Qt Designer carregado em tempo de execução
+├── REVISAO_INTERFACE.md # Diagnóstico e critérios de aceite da revisão da GUI
 ├── requirements.txt # Dependência gráfica
 ├── exemplos/       # Configuração para experimentar a interface
 └── test/           # Testes unittest do motor, parser e interface

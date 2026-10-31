@@ -65,7 +65,7 @@ class TesteEventosAtivacao(unittest.TestCase):
         ])
         self.assertEqual(sim.historico[-1].tarefas[0].instancias_concluidas, 10)
 
-    def test_ocorrencia_pendente_nao_gera_ativacao_nem_reinicia_progresso(self):
+    def test_ocorrencia_pendente_enfileira_ativacao_sem_reiniciar_progresso(self):
         for estado_pendente in [EstadoTarefa.EXECUTANDO, EstadoTarefa.PRONTA, EstadoTarefa.SUSPENSA]:
             with self.subTest(estado=estado_pendente):
                 tarefa = TCB(7, 'FF0000', 0, 5, 2, 1)
@@ -79,7 +79,8 @@ class TesteEventosAtivacao(unittest.TestCase):
 
                 sim.avancar()  # t=2 é um novo múltiplo do período, mas há ocorrência pendente.
                 atual = sim.historico[-1]
-                self.assertFalse(any(e['tipo'] in ['chegada', 'ativacao'] for e in atual.eventos))
+                self.assertIn(dict(tipo='ativacao', tick=2, id_tarefa=7), atual.eventos)
+                self.assertEqual([o.ativacao for o in atual.tarefas[0].ocorrencias_pendentes], [2])
                 progresso = 1 if estado_pendente == EstadoTarefa.EXECUTANDO else 0
                 self.assertEqual(atual.tarefas[0].tempo_exec_instancia,
                                  anterior.tarefas[0].tempo_exec_instancia + progresso)
@@ -89,7 +90,7 @@ class TesteEventosAtivacao(unittest.TestCase):
                 self.assertEqual(atual.tarefas[0].estado_tarefa, estado_pendente)
                 ativacoes = [e for estado in sim.historico for e in estado.eventos
                              if e['tipo'] == 'ativacao']
-                self.assertEqual(ativacoes, [{'tipo': 'ativacao', 'tick': 0, 'id_tarefa': 7}])
+                self.assertEqual(ativacoes, [dict(tipo='ativacao', tick=t, id_tarefa=7) for t in (0, 2)])
 
     def test_novos_ticks_preservam_snapshots_e_eventos_anteriores(self):
         tarefa = TCB(7, 'FF0000', 0, 1, 3, 2)

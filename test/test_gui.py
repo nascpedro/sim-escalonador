@@ -253,6 +253,91 @@ class TestInterface(unittest.TestCase):
         self.assertIn(to_rgba("#aabbcc"), cores)
         dialogo.deleteLater()
 
+    def carregar_historia_para_navegar(self):
+        self.caminho.write_text("RM;0;2\n1;36BFA6;0;1;25;25;\n2;579BFF;0;3;30;30;\n", encoding="utf-8")
+        self.janela.carregar_arquivo(str(self.caminho))
+        sim = self.janela.simulacao
+        assert sim is not None
+        for _ in range(60):
+            sim.avancar()
+        self.janela.atualizar()
+        return sim
+
+    def test_barra_temporal_percorre_historico_sem_alterar_simulacao(self):
+        import pickle
+        sim = self.carregar_historia_para_navegar()
+        antes = pickle.dumps(sim.historico)
+        self.janela.zoomMaisButton.click()
+        barra = self.janela.barra_tempo
+        self.assertGreater(barra.maximum(), 0)
+        largura = self.janela.figura.axes[0].get_xlim()[1] - self.janela.figura.axes[0].get_xlim()[0]
+        barra.setValue(barra.maximum())
+        self.assertAlmostEqual(self.janela.figura.axes[0].get_xlim()[1], 60)
+        barra.setValue(0)
+        self.assertAlmostEqual(self.janela.figura.axes[0].get_xlim()[0], 0)
+        self.assertAlmostEqual(self.janela.figura.axes[0].get_xlim()[1], largura)
+        self.assertEqual(pickle.dumps(sim.historico), antes)
+        self.assertEqual(sim.instante_atual, 60)
+
+    def test_zoom_preservado_ao_avancar_retroceder_e_redimensionar(self):
+        self.carregar_historia_para_navegar()
+        self.janela.zoom(.25)
+        self.janela.barra_tempo.setValue(0)
+        limites = self.janela.figura.axes[0].get_xlim()
+        self.janela.avancar()
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), limites)
+        self.janela.retroceder()
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), limites)
+        self.janela.resize(1350, 850)
+        self.app.processEvents()
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), limites)
+
+    def test_retrocesso_limita_vista_e_ajustar_tudo_mostra_so_prefixo(self):
+        sim = self.carregar_historia_para_navegar()
+        self.janela.zoom(.2)
+        self.janela.barra_tempo.setValue(self.janela.barra_tempo.maximum())
+        self.janela.retroceder()
+        self.assertAlmostEqual(self.janela.figura.axes[0].get_xlim()[1], 59)
+        self.assertAlmostEqual(self.janela.figura.axes[0].get_xlim()[1] - self.janela.figura.axes[0].get_xlim()[0], 12)
+        self.janela.botao_ajustar_gantt.click()
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), (0, 59))
+        self.assertEqual(self.janela.barra_tempo.maximum(), 0)
+        self.assertEqual(len(sim.historico), 61)
+        self.janela.retroceder()
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), (0, 58))
+
+    def test_muitas_tarefas_tem_rolagem_vertical_real(self):
+        linhas = [f"{i};{1000 + i * 700:06X};0;1;100;100;" for i in range(1, 26)]
+        self.caminho.write_text("RM;0;2\n" + "\n".join(linhas), encoding="utf-8")
+        self.janela.resize(self.janela.minimumSize())
+        self.janela.show()
+        self.janela.carregar_arquivo(str(self.caminho))
+        self.app.processEvents()
+        container = self.janela.graficoContainer
+        self.assertTrue(container.parentWidget().rect().contains(container.geometry()))
+        barra = self.janela.gantt.verticalScrollBar()
+        self.assertGreater(barra.maximum(), 0)
+        self.assertGreater(self.janela.canvas.height(), self.janela.gantt.viewport().height())
+        barra.setValue(barra.maximum())
+        self.assertEqual(barra.value(), barra.maximum())
+
+    def test_exportacao_integral_apos_navegar_nao_altera_vista(self):
+        import pickle
+        import xml.etree.ElementTree as ET
+        sim = self.carregar_historia_para_navegar()
+        self.janela.retroceder()
+        self.janela.zoom(.2)
+        self.janela.barra_tempo.setValue(0)
+        limites = self.janela.figura.axes[0].get_xlim()
+        antes = pickle.dumps(sim.historico)
+        saida = Path(self.pasta.name) / 'navegado.svg'
+        self.assertTrue(self.janela.exportar_arquivo(saida))
+        texto = ' '.join(ET.parse(saida).getroot().itertext())
+        self.assertIn('histórico: 0 a 59 ticks', texto)
+        self.assertNotIn('histórico: 0 a 60 ticks', texto)
+        self.assertEqual(self.janela.figura.axes[0].get_xlim(), limites)
+        self.assertEqual(pickle.dumps(sim.historico), antes)
+
     def test_redesenho_nao_acumula_eixos_ou_troca_canvas(self):
         self.janela.carregar_arquivo(str(self.caminho))
         canvas = self.janela.canvas
@@ -264,6 +349,58 @@ class TestInterface(unittest.TestCase):
         self.assertIs(self.janela.canvas, canvas)
         self.assertEqual(len(self.janela.figura.axes), 1)
         self.assertEqual(self.janela.figura.axes[0].get_xlim()[1], 4)
+
+    def test_configuracao_sem_mudancas_invalida_e_quantum_grande(self):
+        self.caminho.write_text('RM;1000000000000;2\n1;123456;0;4;10;10;', encoding='utf-8')
+        self.janela.carregar_arquivo(self.caminho)
+        sim = self.janela.simulacao
+        self.assertEqual(self.janela.quantumEntrada.text(), '1000000000000')
+        sim.avancar(3)
+        sim.retroceder()
+        self.janela.atualizar()
+        futuro = sim.historico[-1]
+        self.janela.aplicar_configuracao_sistema()
+        self.assertIs(sim.historico[-1], futuro)
+        self.janela.quantumEntrada.setText('abc')
+        self.janela.aplicar_configuracao_sistema()
+        self.assertIn('inteiros', self.janela.mensagem.text())
+        self.assertIs(sim.historico[-1], futuro)
+        self.janela.quantumEntrada.setText('2')
+        self.janela.quantidadeCpusEntrada.setText('1')
+        self.janela.algoritmoCombo.setCurrentIndex(1)
+        self.janela.aplicar_configuracao_sistema()
+        self.assertEqual(sim.algoritmo, 'EDF')
+        self.assertEqual(len(sim.historico), 3)
+        self.janela.retroceder()
+        self.assertEqual(self.janela.algoritmoCombo.currentIndex(), 0)
+
+    def test_imagem_final_automatica_por_passo_e_por_execucao_sem_sobrescrever(self):
+        self.caminho.write_text('RM;0;1\n1;123456;0;1;1;1;', encoding='utf-8')
+        destino = self.caminho.with_name(self.caminho.stem + '-gantt.svg')
+        destino.write_text('preservar', encoding='utf-8')
+        self.janela.carregar_arquivo(self.caminho)
+        for _ in range(10):
+            self.janela.avancar()
+        saida = self.caminho.with_name(self.caminho.stem + '-gantt-2.svg')
+        self.assertTrue(saida.is_file())
+        self.assertEqual(destino.read_text(encoding='utf-8'), 'preservar')
+        self.assertIn('SVG salvo', self.janela.mensagem.text())
+        self.janela.carregar_arquivo(self.caminho)
+        self.janela.executar_completa()
+        self.esperar_lote()
+        self.assertTrue(self.caminho.with_name(self.caminho.stem + '-gantt-3.svg').is_file())
+
+    def test_falha_imagem_final_preserva_resultado_para_nova_exportacao(self):
+        from unittest.mock import patch
+        self.janela.carregar_arquivo(self.caminho)
+        sim = self.janela.simulacao
+        sim.executar_completa()
+        sim.retroceder()
+        with patch('gui.exportar_svg', side_effect=PermissionError('destino sem permissao')):
+            self.janela.avancar()
+        self.assertIn('permanece disponível', self.janela.mensagem.text())
+        self.assertEqual(sum(t.instancias_concluidas for t in sim.historico[-1].tarefas), 20)
+        self.assertTrue(self.janela.exportar_arquivo(Path(self.pasta.name) / 'outro.svg'))
 
 
 if __name__ == "__main__":

@@ -1,14 +1,18 @@
-from models import *
+from models import Cpu, EstadoSimulacao, EstadoTarefa, Ocorrencia
 from scheduler import escalonar
 import copy
 import re
 
 class Simulacao:
     def __init__(self, estado_inicial: EstadoSimulacao, algoritmo: str):
-        self.algoritmo = algoritmo
+        estado_inicial.algoritmo = algoritmo.upper()
         # O histórico guarda cada estado da simulação
         self.historico = [estado_inicial]
         self.instante_atual = 0 # aponta para o instante de tempo atual da simulação
+
+    @property
+    def algoritmo(self):
+        return self.historico[self.instante_atual].algoritmo or self.historico[0].algoritmo
 
 
 
@@ -53,6 +57,39 @@ class Simulacao:
     def retroceder(self, passos: int = 1) -> None:
         # Retrocede simulação com base no histórico
         self.instante_atual = max(0, self.instante_atual - passos)
+
+    def configurar_sistema(self, algoritmo, quantum, quantidade_cpus):
+        """Valida tudo antes de substituir o snapshot; retorna se houve mudança."""
+        if not isinstance(algoritmo, str) or algoritmo.upper() not in ('RM', 'EDF'):
+            raise ValueError('algoritmo deve ser RM ou EDF.')
+        if type(quantum) is not int or quantum < 0:
+            raise ValueError('quantum deve ser inteiro maior ou igual a zero.')
+        if type(quantidade_cpus) is not int or quantidade_cpus < 1:
+            raise ValueError('quantidade de CPUs deve ser inteiro maior ou igual a um.')
+        algoritmo = algoritmo.upper()
+        anterior = self.historico[self.instante_atual]
+        if (algoritmo, quantum, quantidade_cpus) == (self.algoritmo, anterior.quantum, len(anterior.cpus)):
+            return False
+        novo = copy.deepcopy(anterior)
+        novo.algoritmo = algoritmo
+        novo.quantum = quantum
+        # CPUs preservadas mantêm alocação e ociosidade; novas começam livres.
+        novo.cpus = novo.cpus[:quantidade_cpus]
+        proximo_id = max((c.id_cpu for c in novo.cpus), default=-1) + 1
+        while len(novo.cpus) < quantidade_cpus:
+            novo.cpus.append(Cpu(proximo_id))
+            proximo_id += 1
+        ids = {c.id_cpu for c in novo.cpus}
+        for tarefa in novo.tarefas:
+            if novo.quantum != anterior.quantum:
+                tarefa.tempo_exec_quantum = 0
+            if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO and tarefa.id_cpu_atual not in ids:
+                tarefa.estado_tarefa = EstadoTarefa.PRONTA
+                tarefa.id_cpu_atual = None
+                tarefa.tempo_exec_quantum = 0
+        self.historico[self.instante_atual] = novo
+        del self.historico[self.instante_atual + 1:]
+        return True
 
     def modificar_tarefa_em_execucao(self, id_tarefa: int | str, **alteracoes) -> None:
         """Edita ingresso, duracao, periodo, prazo, cor ou estado_tarefa.
@@ -116,9 +153,16 @@ class Simulacao:
         elif anterior.instancias_concluidas == 0:
             nova.prazo_absoluto = nova.ingresso + nova.prazo
         if nova.estado_tarefa == EstadoTarefa.AGUARDANDO and anterior.estado_tarefa in ativos:
-            # A mudança manual abandona a ocorrência atual e espera a próxima ativação.
+            # Abandona a ocorrência e sua fila, sem fabricar conclusões.
             nova.tempo_exec_instancia = 0
             nova.perdeu_prazo = False
+            nova.ocorrencias_pendentes.clear()
+        if nova.prazo != anterior.prazo:
+            for ocorrencia in nova.ocorrencias_pendentes:
+                ocorrencia.prazo_absoluto = ocorrencia.ativacao + nova.prazo
+                ocorrencia.perdeu_prazo = False
+        if any(nova.ingresso > o.ativacao for o in nova.ocorrencias_pendentes):
+            raise ValueError("ingresso não pode ser posterior à ativação de uma ocorrência pendente.")
         if nova.prazo_absoluto != anterior.prazo_absoluto:
             # Se o novo prazo já venceu, o próximo tick registra a perda no histórico.
             nova.perdeu_prazo = False
@@ -148,125 +192,118 @@ class Simulacao:
         del self.historico[self.instante_atual + 1:]
 
     def _executar_um_tick(self, estado_ant: EstadoSimulacao) -> EstadoSimulacao:
-        # 1. Clona estado_ant para não sobrescrever a foto do tick t
-        novo_estado = copy.deepcopy(estado_ant)
-        t = estado_ant.tick
-        novo_estado.eventos = []
+        """Um tick: copiar → ativar → escalonar/despachar → executar → verificar."""
+        estado = copy.deepcopy(estado_ant)
+        estado.eventos = []
+        self._ativar_tarefas(estado)
+        self._despachar(estado)
+        self._executar_tarefas(estado)
+        self._verificar_prazos(estado)
+        estado.tick += 1
+        return estado
 
-        # 2. Registra a chegada inicial separadamente das ativações periódicas.
-        for tarefa in novo_estado.tarefas:
+    def _iniciar_ocorrencia(self, tarefa, ocorrencia):
+        # O prazo conta da ativação original, mesmo após esperar na fila.
+        tarefa.estado_tarefa = EstadoTarefa.PRONTA
+        tarefa.tempo_exec_instancia = 0
+        tarefa.tempo_exec_quantum = 0
+        tarefa.prazo_absoluto = ocorrencia.prazo_absoluto
+        tarefa.perdeu_prazo = ocorrencia.perdeu_prazo
+        tarefa.id_cpu_atual = None
+
+    def _ativar_tarefas(self, estado):
+        t = estado.tick
+        for tarefa in estado.tarefas:
             if t == tarefa.ingresso:
-                novo_estado.eventos.append({
-                    'tipo': 'chegada', 'tick': t, 'id_tarefa': tarefa.id
-                })
-            if tarefa.instancias_concluidas >= 10:
-                tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
+                estado.eventos.append(dict(tipo='chegada', tick=t, id_tarefa=tarefa.id))
+            if tarefa.estado_tarefa == EstadoTarefa.FINALIZADA:
+                continue
+            if t < tarefa.ingresso or (t - tarefa.ingresso) % tarefa.periodo != 0:
                 continue
 
-            # Verifica se há uma ativação prevista no ingresso ou a cada período.
-            if t >= tarefa.ingresso and (t - tarefa.ingresso) % tarefa.periodo == 0:
-                if tarefa.estado_tarefa == EstadoTarefa.AGUARDANDO:
-                    tarefa.estado_tarefa = EstadoTarefa.PRONTA
-                    tarefa.tempo_exec_instancia = 0
-                    tarefa.prazo_absoluto = t + tarefa.prazo
-                    tarefa.perdeu_prazo = False
-                    # Só registra quando a ocorrência realmente é ativada, no instante t.
-                    novo_estado.eventos.append({
-                        'tipo': 'ativacao', 'tick': t, 'id_tarefa': tarefa.id
-                    })
+            ativa = tarefa.estado_tarefa != EstadoTarefa.AGUARDANDO
+            # A parada em dez execuções também limita o trabalho já admitido.
+            total = tarefa.instancias_concluidas + len(tarefa.ocorrencias_pendentes) + int(ativa)
+            if total >= 10:
+                continue
+            ocorrencia = Ocorrencia(t, t + tarefa.prazo)
+            estado.eventos.append(dict(tipo='ativacao', tick=t, id_tarefa=tarefa.id))
+            if not ativa:
+                self._iniciar_ocorrencia(tarefa, ocorrencia)
+            elif tarefa.prazo_absoluto - tarefa.prazo != t:
+                # Uma ativação manual no próprio instante já representa esta ocorrência.
+                tarefa.ocorrencias_pendentes.append(ocorrencia)
 
-        # 3. Reavalia a cada tick, depois dos eventos, sem esperar o quantum acabar.
-        # Prontas e executando disputam CPU; preserva quem executava para o desempate.
-        candidatas = []
-        for tarefa in novo_estado.tarefas:
-            if tarefa.estado_tarefa in (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO):
-                candidatas.append(tarefa)
-
-        # A política retorna a ordem de preferência sem reordenar a lista de todas as tarefas.
+    def _despachar(self, estado):
+        candidatas = [t for t in estado.tarefas
+                      if t.estado_tarefa in (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO)]
         sorteios = []
-        tarefas_ordenadas = escalonar(candidatas, self.algoritmo, sorteios)
-        # Guarda o instante real da decisão, não o tick t+1 do estado retornado.
-        ids_selecionadas = [tarefa.id for tarefa in tarefas_ordenadas[:len(novo_estado.cpus)]]
-        # Preserva os sorteios no início da lista, como nos snapshots anteriores.
-        for indice_sorteio, ordem in enumerate(sorteios):
-            novo_estado.eventos.insert(indice_sorteio, {
-                'tipo': 'sorteio',
-                'tick': t,
-                'ordem': ordem,
-                'selecionadas': [id_tarefa for id_tarefa in ordem if id_tarefa in ids_selecionadas]
-            })
-        # 4. Refaz as alocações após a decisão; o escalonador já usou quem executava.
-        for tarefa in novo_estado.tarefas:
+        # Consultar a política antes de apagar quem estava executando (desempate).
+        ordenadas = escalonar(candidatas, estado.algoritmo, sorteios)
+        ids = [t.id for t in ordenadas[:len(estado.cpus)]]
+        for indice, ordem in enumerate(sorteios):
+            estado.eventos.insert(indice, dict(
+                tipo='sorteio', tick=estado.tick, ordem=ordem,
+                selecionadas=[id_ for id_ in ordem if id_ in ids]))
+        for tarefa in estado.tarefas:
             tarefa.id_cpu_atual = None
             if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO:
                 tarefa.estado_tarefa = EstadoTarefa.PRONTA
-
-        for indice, cpu in enumerate(novo_estado.cpus):
+        for indice, cpu in enumerate(estado.cpus):
             cpu.id_tarefa_alocada = None
-            if indice < len(tarefas_ordenadas):
-                tarefa = tarefas_ordenadas[indice]
+            if indice < len(ordenadas):
+                tarefa = ordenadas[indice]
                 cpu.id_tarefa_alocada = tarefa.id
                 tarefa.id_cpu_atual = cpu.id_cpu
                 tarefa.estado_tarefa = EstadoTarefa.EXECUTANDO
-        # CPUs sem tarefa ficam livres; o tempo desligado será contado na etapa 5.
 
-        # 5. Executa [t, t+1). Uma CPU que trabalhou não conta como desligada,
-        # mesmo que sua tarefa termine e libere a CPU no fim do intervalo.
-        for cpu in novo_estado.cpus:
+    def _executar_tarefas(self, estado):
+        t = estado.tick
+        for cpu in estado.cpus:
             if cpu.id_tarefa_alocada is None:
                 cpu.tempo_desligada += 1
-                novo_estado.eventos.append({
-                    'tipo': 'cpu_desligada', 'tick': t, 'id_cpu': cpu.id_cpu
-                })
-
-        for tarefa in novo_estado.tarefas:
-            # A fatia pertence à tarefa enquanto executa sem interrupção,
-            # mesmo se o despacho a migrar para outra CPU.
+                estado.eventos.append(dict(tipo='cpu_desligada', tick=t, id_cpu=cpu.id_cpu))
+        for tarefa in estado.tarefas:
             if tarefa.estado_tarefa != EstadoTarefa.EXECUTANDO:
                 tarefa.tempo_exec_quantum = 0
-            if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO:
-                tarefa.tempo_exec_instancia += 1
-                if novo_estado.quantum > 0:
-                    tarefa.tempo_exec_quantum += 1
-                # Preserva quem executou neste intervalo, mesmo após liberar a CPU.
-                novo_estado.eventos.append({
-                    'tipo': 'execucao', 'tick': t,
-                    'id_tarefa': tarefa.id, 'id_cpu': tarefa.id_cpu_atual
-                })
-                if tarefa.tempo_exec_instancia >= tarefa.duracao:
-                    tarefa.tempo_exec_quantum = 0
-                    tarefa.instancias_concluidas += 1
-                    if tarefa.instancias_concluidas >= 10:
-                        tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
-                    else:
-                        tarefa.estado_tarefa = EstadoTarefa.AGUARDANDO
-                    for cpu in novo_estado.cpus:
-                        if cpu.id_tarefa_alocada == tarefa.id:
-                            cpu.id_tarefa_alocada = None
-                    tarefa.id_cpu_atual = None
-                    novo_estado.eventos.append({
-                        'tipo': 'conclusao', 'tick': t + 1,
-                        'id_tarefa': tarefa.id, 'instancia': tarefa.instancias_concluidas
-                    })
-                elif novo_estado.quantum > 0 and tarefa.tempo_exec_quantum >= novo_estado.quantum:
-                    novo_estado.eventos.append({
-                        'tipo': 'fim_quantum', 'tick': t + 1,
-                        'id_tarefa': tarefa.id, 'id_cpu': tarefa.id_cpu_atual
-                    })
-                    tarefa.tempo_exec_quantum = 0
-                    # Não bloqueia nem apaga quem executava: no próximo tick,
-                    # no mesmo instante t+1, RM/EDF reavaliam todas as candidatas.
+                continue
+            tarefa.tempo_exec_instancia += 1
+            if estado.quantum > 0:
+                tarefa.tempo_exec_quantum += 1
+            estado.eventos.append(dict(tipo='execucao', tick=t,
+                                      id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+            if tarefa.tempo_exec_instancia >= tarefa.duracao:
+                tarefa.instancias_concluidas += 1
+                tarefa.tempo_exec_quantum = 0
+                estado.eventos.append(dict(tipo='conclusao', tick=t + 1,
+                    id_tarefa=tarefa.id, instancia=tarefa.instancias_concluidas))
+                for cpu in estado.cpus:
+                    if cpu.id_tarefa_alocada == tarefa.id:
+                        cpu.id_tarefa_alocada = None
+                tarefa.id_cpu_atual = None
+                if tarefa.instancias_concluidas == 10:
+                    tarefa.estado_tarefa = EstadoTarefa.FINALIZADA
+                elif tarefa.ocorrencias_pendentes:
+                    self._iniciar_ocorrencia(tarefa, tarefa.ocorrencias_pendentes.pop(0))
+                else:
+                    tarefa.estado_tarefa = EstadoTarefa.AGUARDANDO
+            elif estado.quantum > 0 and tarefa.tempo_exec_quantum >= estado.quantum:
+                estado.eventos.append(dict(tipo='fim_quantum', tick=t + 1,
+                    id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+                # Reavaliar no próximo tick; expirar a fatia não exige rodízio.
+                tarefa.tempo_exec_quantum = 0
 
-        # Verifica o prazo após as conclusões: terminar exatamente no limite é válido.
-        # Prontas e suspensas também podem perder prazo, mesmo sem receber CPU.
-        for tarefa in novo_estado.tarefas:
+    def _verificar_prazos(self, estado):
+        # Conclusões já foram processadas: terminar exatamente no prazo é válido.
+        for tarefa in estado.tarefas:
             if tarefa.estado_tarefa in (EstadoTarefa.PRONTA, EstadoTarefa.EXECUTANDO, EstadoTarefa.SUSPENSA):
-                if t + 1 >= tarefa.prazo_absoluto and not tarefa.perdeu_prazo:
+                if estado.tick + 1 >= tarefa.prazo_absoluto and not tarefa.perdeu_prazo:
                     tarefa.perdeu_prazo = True
-                    novo_estado.eventos.append({
-                        'tipo': 'perda_prazo', 'tick': t + 1, 'id_tarefa': tarefa.id
-                    })
-
-        # 6. Retorna o novo estado referente a t+1
-        novo_estado.tick = t + 1
-        return novo_estado
+                    estado.eventos.append(dict(tipo='perda_prazo', tick=estado.tick + 1,
+                                              id_tarefa=tarefa.id))
+            # A espera pela ocorrência anterior também consome o prazo.
+            for ocorrencia in tarefa.ocorrencias_pendentes:
+                if estado.tick + 1 >= ocorrencia.prazo_absoluto and not ocorrencia.perdeu_prazo:
+                    ocorrencia.perdeu_prazo = True
+                    estado.eventos.append(dict(tipo='perda_prazo', tick=estado.tick + 1,
+                        id_tarefa=tarefa.id, ativacao=ocorrencia.ativacao))

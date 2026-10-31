@@ -1,3 +1,65 @@
+# Distribuição Windows — versão atual e histórico
+
+## Versão atual — 31/10/2026
+
+O build atual usa `scripts/empacotar.ps1`, com dependências de build fixadas em
+`requirements-build.txt`. Inclui Python 3.11.9, PySide6 6.12.0, Matplotlib 3.11.2,
+o formulário `ui/janela_principal.ui`, exemplos e instruções. A pasta inteira é
+necessária; o ZIP fica em `dist/SimuladorSO-windows-x64.zip` e não é versionado.
+
+### Falhas encontradas e corrigidas nesta versão
+
+1. A primeira tentativa coletou `icuuc.dll` 78.3 de outra ferramenta no PATH.
+   Essa DLL não fornece os símbolos sem sufixo que o Qt espera da ICU do Windows;
+   a importação de QtCore falhou. Confirmado numa variante com console, pela
+   inspeção das importações e pela substituição da DLL somente no build de diagnóstico.
+   O script agora restringe o PATH ao Windows durante a análise, sem modificar o
+   PATH permanente do computador. A ICU externa não entra no novo pacote.
+2. Após corrigir ICU, a exportação revelou `ModuleNotFoundError` para
+   `matplotlib.backends.backend_svg`. O script agora inclui esse backend explícito,
+   pois a seleção dinâmica de SVG não foi descoberta pelo PyInstaller.
+
+### Validação executada
+
+- **106 testes aprovados** do código, incluindo Qt offscreen, desenho, exportação,
+  exemplos RM/EDF, ocorrências FIFO, configuração histórica e imagem final automática.
+- Capturas da janela em execução pelo Python, tela completa e zoom, inspecionadas
+  em `build/janela-final.png` e `build/janela-zoom.png`.
+- Executável reconstruído testado **três vezes** com diretório corrente temporário
+  fora do repositório e PATH limitado ao Windows/System32. Cada execução terminou
+  com código 0 e produziu SVG vetorial completo até o tick 185 (80.641 bytes).
+- Entrada inválida terminou com código 1 sem produzir SVG. O teste reproduzível está
+  em `scripts/verificar_distribuicao.py`; o script de build executa essa verificação
+  antes de atualizar o ZIP.
+- O recurso `_internal/ui/janela_principal.ui` foi conferido no pacote.
+
+**Limites:** o host possui Python instalado. Isso não é homologação em máquina limpa.
+O controle nativo tentou abrir o executável, mas a autorização do aplicativo expirou;
+a interação e o fechamento da janela empacotada ainda precisam de verificação manual.
+A GUI pelo Python foi exercitada nos testes; não confundir essas duas evidências.
+O encerramento anormal do build antigo abaixo não foi revalidado como resolvido
+apenas pelo sucesso da CLI atual. Não há garantia de compatibilidade com todas as
+versões de Windows, arquiteturas ou configurações gráficas.
+
+### Reprodução
+
+```powershell
+uv pip install --python .venv-windows/Scripts/python.exe -r requirements-build.txt
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/empacotar.ps1
+.\.venv-windows\Scripts\python.exe -B scripts/verificar_distribuicao.py dist/SimuladorSO
+```
+
+Para usar, extraia a pasta inteira e abra `SimuladorSO.exe`. Para exportar sem janela:
+
+```powershell
+.\SimuladorSO.exe --exportar exemplos/configuracao.txt resultado.svg
+```
+
+## Histórico: experimento anterior à integração Matplotlib/UI
+
+O texto abaixo é registro histórico. Seus caminhos de scratch, resultados e receita
+antiga não descrevem o pacote atual.
+
 # Empacotamento Windows — experimento, não entrega final
 
 ## Decisão
@@ -70,7 +132,9 @@ O experimento confirma geração e abertura local de um bundle, não uma entrega
 pronta para a apresentação. Investigar esse encerramento e testar em Windows
 limpo permanecem obrigatórios antes de distribuir a versão final.
 
-## Reprodução (bash no Windows)
+## Reprodução do experimento antigo (bash no Windows)
+
+**Não usar o comando abaixo como receita da versão atual:** o `gui.py` atual carrega `ui/janela_principal.ui` em tempo de execução. O próximo build deve incluir esse recurso, Matplotlib e os demais módulos atuais, e validar sua localização fora do repositório. O experimento descrito aqui não foi reconstruído nesta revisão documental.
 
 Substituir `<repo>` e `<scratch>` por caminhos Windows com barras `/`.
 Pré-requisito: `.venv-windows` com Python 3.11 x64 e PySide6 6.12.0.

@@ -154,6 +154,7 @@ activemq-data/
 .envrc
 .venv
 .venv-windows/
+.venv-ctk/
 env/
 venv/
 ENV/
@@ -222,5 +223,5 @@ __marimo__/
 
 
 #Enunciado do simulador:
-simulador-escalonamento.md 
-simulador-escalonamento.pdf 
+simulador-escalonamento.md
+simulador-escalonamento.pdf

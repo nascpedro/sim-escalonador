@@ -1,6 +1,11 @@
 
 # Simulador de Sistema Operacional Multitarefa de Tempo Compartilhado
 
+> **Branch experimental `codex/customtkinter-drawsvg`:** a nova interface está em
+> `gui_ctk.py` e o desenho compartilhado Canvas/SVG em `gantt_svg.py`.
+> Execução e limites do experimento: [EXPERIMENTO_CTK.md](EXPERIMENTO_CTK.md).
+> A versão Qt continua disponível em `gui.py`; os comandos abaixo descrevem essa versão.
+
 Simulador de escalonamento preemptivo multiprocessador com foco em sistemas de tempo real periódicos (Rate Monotonic e Earliest Deadline First), com suporte a múltiplos núcleos e controle de avançar e retroceder a simulação (time-travel debugging).
 
 Comece por este README para executar e apresentar o **Projeto A**. [docs.md](docs.md) registra as decisões; [PENDENCIAS.md](PENDENCIAS.md) acompanha os requisitos ainda abertos. [REVISAO_INTERFACE.md](REVISAO_INTERFACE.md) e [EMPACOTAMENTO.md](EMPACOTAMENTO.md) guardam o histórico técnico dessas frentes; não são pré-requisitos para entender o fluxo principal.

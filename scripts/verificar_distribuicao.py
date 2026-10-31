@@ -1,4 +1,4 @@
-"""Teste local do executável fora do repositório, sem Python/Qt no PATH.
+"""Teste local do executável fora do repositório, sem Python no PATH.
 
 Uso: python scripts/verificar_distribuicao.py dist/SimuladorSO
 Não substitui a homologação em um Windows limpo.
@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 def main():
     pacote = Path(sys.argv[1]).resolve()
     executavel = pacote / 'SimuladorSO.exe'
-    assert (pacote / '_internal/ui/janela_principal.ui').is_file()
+    assert (pacote / '_internal/customtkinter/assets/themes/blue.json').is_file()
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(('PYTHON', 'QT_', 'PYSIDE', 'MPL'))}
     env['PATH'] = os.pathsep.join([os.environ['SystemRoot'],
@@ -30,7 +30,7 @@ def main():
                 cwd=pasta, env=env, timeout=60)
             assert r.returncode == 0, r.returncode
             raiz = ET.parse(destino).getroot()
-            assert 'histórico: 0 a 185 ticks' in ''.join(raiz.itertext())
+            assert '0 a 185 ticks' in ''.join(raiz.itertext())
             assert raiz.find('.//{http://www.w3.org/2000/svg}image') is None
             resultados.append(dict(execucao=i + 1, codigo=r.returncode,
                                    svg_bytes=destino.stat().st_size))
@@ -41,6 +41,15 @@ def main():
         assert r.returncode == 1, r.returncode
         assert not (pasta / 'erro.svg').exists()
         resultados.append(dict(entrada_invalida=True, codigo=r.returncode))
+        for i in range(2):
+            relatorio = pasta / f'interface-{i}.json'
+            r = subprocess.run([str(executavel), '--verificar-interface',
+                str(pacote / 'exemplos/configuracao.txt'), str(relatorio)],
+                cwd=pasta, env=env, timeout=60)
+            assert r.returncode == 0, r.returncode
+            dados = json.loads(relatorio.read_text(encoding='utf-8'))
+            assert dados['tick_final'] == 185 and dados['concluidas'] == 30
+            resultados.append(dados)
     print(json.dumps(resultados, indent=2))
 
 

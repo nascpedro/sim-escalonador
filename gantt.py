@@ -1,130 +1,167 @@
-"""Um único desenho Matplotlib para a tela e para a exportação vetorial.
+"""O mesmo desenho em Canvas Tkinter e SVG drawsvg, sem Qt/Matplotlib.
 
-Não importa Qt/pyplot, não escolhe backend e nunca executa a simulação.
+Cada destino implementa quatro operações: retângulo, linha, texto e polígono.
+O desenho do Gantt chama essas operações sem conhecer a janela.
 """
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
-from matplotlib.path import Path
-from matplotlib.ticker import MaxNLocator
+import math
+from pathlib import Path
+
+import drawsvg as draw
 
 from linha_tempo import coletar_intervalos
 
-# Marcador, nome, cor e pista vertical dentro da linha da tarefa.
+
+# Nome, cor e faixa abaixo da barra. Cada evento possui uma forma distinta.
 EVENTOS = {
-    'chegada': ('v', 'Chegada', '#215e99', .85),
-    'ativacao': ('^', 'Ativação', '#42692e', 1.1),
-    'conclusao': ('o', 'Conclusão', '#176d58', 1.35),
-    'perda_prazo': ('X', 'Perda de prazo', '#a62626', 1.6),
-    'fim_quantum': ('s', 'Fim de quantum', '#855215', 1.85),
-    'sorteio': ('D', 'Sorteio', '#6e3f97', .6),
+    'chegada': ('Chegada', '#215e99', 31),
+    'ativacao': ('Ativação', '#42692e', 42),
+    'conclusao': ('Conclusão', '#176d58', 53),
+    'perda_prazo': ('Perda de prazo', '#a62626', 64),
+    'fim_quantum': ('Fim de quantum', '#855215', 75),
+    'sorteio': ('Sorteio', '#6e3f97', 86),
 }
 
 
-def _desenhar_intervalos(ax, grupos, linhas, linhas_cpu):
-    # Uma coleção por tarefa/CPU/cor, em vez de uma por retângulo.
-    textos_cpu = []
-    for indice, ((tipo, id_, cpu, cor), trechos) in enumerate(grupos.items()):
-        y = linhas_cpu[cpu] if tipo == 'cpu_desligada' else linhas[id_]
-        suspensa = tipo == 'suspensa'
-        bloco = ax.broken_barh([(a, b-a) for a, b in trechos], (y, .45), facecolors=cor,
-            edgecolors='#bcbcbc' if suspensa else '#526171', linewidth=.5,
-            hatch='///' if suspensa else None, label=f'{tipo}: tarefa {id_}, CPU {cpu}')
-        bloco.set_gid(f'{tipo}-{indice}')
-        if tipo != 'execucao':
-            continue
-        # A CPU não muda ao expirar o quantum: um rótulo por execução contínua
-        # basta. Os retângulos e os marcadores mantêm todas as fronteiras reais.
-        rotulos = []
-        for a, b in trechos:
-            if rotulos and rotulos[-1][1] == a:
-                rotulos[-1][1] = b
-            else:
-                rotulos.append([a, b])
-        for a, b in rotulos:
-            texto = ax.text((a+b)/2, y+.225, str(cpu), ha='center', va='center',
-                fontsize=7, color='black', clip_on=True,
-                bbox=dict(facecolor='white', edgecolor='none', pad=.2))
-            limite = Path([(a, y), (b, y), (b, y+.45), (a, y+.45), (a, y)])
-            texto.set_clip_path(limite, ax.transData)
-            texto.get_bbox_patch().set_clip_path(limite, ax.transData)
-            textos_cpu.append((a, b, texto))
+class DesenhoCanvas:
+    """Adaptador das quatro operações para o Canvas público do Tkinter."""
+    def __init__(self, canvas):
+        self.canvas = canvas
 
-    def posicionar_cpus(eixo):
-        # Mantém a identificação dentro do trecho visível também após zoom/pan.
-        esquerda, direita = sorted(eixo.get_xlim())
-        for a, b, texto in textos_cpu:
-            inicio, fim = max(a, esquerda), min(b, direita)
-            texto.set_visible(inicio < fim)
-            texto.set_x((inicio + fim) / 2)
+    def retangulo(self, x, y, largura, altura, cor, hachura=False):
+        self.canvas.create_rectangle(x, y, x+largura, y+altura,
+            fill=cor, outline='#526171', stipple='gray50' if hachura else '')
 
-    ax.callbacks.connect('xlim_changed', posicionar_cpus)
+    def linha(self, x1, y1, x2, y2, cor):
+        self.canvas.create_line(x1, y1, x2, y2, fill=cor)
+
+    def texto(self, x, y, texto, cor='#243446', centro=False):
+        self.canvas.create_text(x, y, text=str(texto), fill=cor,
+            anchor='center' if centro else 'w', font=('Segoe UI', 10))
+
+    def poligono(self, pontos, cor):
+        self.canvas.create_polygon(*[v for ponto in pontos for v in ponto], fill=cor)
 
 
-def _desenhar_eventos(ax, eventos, linhas):
-    # Um scatter recebe todos os pontos do tipo na mesma trilha.
-    grupos = {}
-    for evento in eventos:
-        tipo = evento['tipo']
-        if tipo == 'sorteio':
-            ids = evento.get('selecionadas', evento.get('ordem', []))
-        else:
-            ids = [evento['id_tarefa']]
-        for id_ in ids:
-            grupos.setdefault((tipo, id_), []).append(evento['tick'])
-    for indice, ((tipo, id_), ticks) in enumerate(grupos.items()):
-        marcador, nome, cor, deslocamento = EVENTOS[tipo]
-        y = linhas[id_] + deslocamento
-        artista = ax.scatter(ticks, [y] * len(ticks), marker=marcador, s=20,
-            color=cor, zorder=4, clip_on=True, label=f'{nome}: tarefa {id_}')
-        artista.set_gid(f'evento-{tipo}-{indice}')
+class DesenhoSVG:
+    """Adaptador das mesmas operações para drawsvg; não requer janela/Tcl/Tk."""
+    def __init__(self, largura, altura):
+        self.imagem = draw.Drawing(largura, altura)
+        self.imagem.append(draw.Rectangle(0, 0, largura, altura, fill='white'))
+        self.hachura = draw.Pattern(6, 6, patternUnits='userSpaceOnUse')
+        self.hachura.append(draw.Rectangle(0, 0, 6, 6, fill='#151515'))
+        self.hachura.append(draw.Line(0, 6, 6, 0, stroke='#bcbcbc', stroke_width=1))
+
+    def retangulo(self, x, y, largura, altura, cor, hachura=False):
+        self.imagem.append(draw.Rectangle(x, y, largura, altura,
+            fill=self.hachura if hachura else cor, stroke='#526171', stroke_width=.5))
+
+    def linha(self, x1, y1, x2, y2, cor):
+        self.imagem.append(draw.Line(x1, y1, x2, y2, stroke=cor, stroke_width=1))
+
+    def texto(self, x, y, texto, cor='#243446', centro=False):
+        self.imagem.append(draw.Text(str(texto), 13, x, y, fill=cor,
+            text_anchor='middle' if centro else 'start', dominant_baseline='central',
+            font_family='Segoe UI, sans-serif'))
+
+    def poligono(self, pontos, cor):
+        self.imagem.append(draw.Lines(*[v for ponto in pontos for v in ponto], close=True, fill=cor))
 
 
-def desenhar_gantt(simulacao, figura):
-    """Repopula a mesma Figure e retorna Axes, lendo somente o prefixo visível.
-
-    Os eventos de execução dizem quem trabalhou mesmo quando a CPU já está
-    livre no snapshot seguinte. A cor e a suspensão pertencem ao anterior.
-    GIDs identificam artistas; labels descrevem intervalos em coordenadas reais.
-    """
+def preparar_gantt(simulacao):
+    """Lê somente o prefixo selecionado, sem executar ticks nem alterar estados."""
     estados = simulacao.historico[:simulacao.instante_atual + 1]
     fim = estados[-1].tick
     ids = sorted({t.id for s in estados for t in s.tarefas},
                  key=lambda id_: (isinstance(id_, str), id_), reverse=True)
     cpus = list(dict.fromkeys(c.id_cpu for s in estados for c in s.cpus))
-    figura.clear()
-    figura.set_facecolor('white')
-    figura.set_layout_engine('constrained')
-    ax = figura.add_subplot(111)
-    linhas = {id_: i * 2.3 for i, id_ in enumerate(ids)}
     eventos = [e for s in estados[1:] for e in s.eventos
                if e['tipo'] in EVENTOS and 0 <= e['tick'] <= fim]
-    base = len(ids) * 2.3 + .6
-    linhas_cpu = {cpu: base + i * .7 for i, cpu in enumerate(cpus)}
-    intervalos = coletar_intervalos(estados, eventos, fim)
-    _desenhar_intervalos(ax, intervalos, linhas, linhas_cpu)
-    _desenhar_eventos(ax, eventos, linhas)
+    return fim, ids, cpus, eventos, coletar_intervalos(estados, eventos, fim)
 
-    posicoes = list(linhas.values()) + list(linhas_cpu.values())
-    rotulos = [f'Tarefa {id_}' for id_ in ids] + [f'CPU {cpu} ociosa' for cpu in cpus]
-    ax.set_yticks([y+.225 for y in posicoes], rotulos)
-    ax.set_ylim((posicoes[-1] + 1 if posicoes else 1), -.3)
-    # Folga visual interna para os marcadores nas extremidades, sem mudar ticks.
-    alcance = max(1, fim)
-    margem = alcance * .02
-    ax.set_xlim(-margem, alcance + margem)
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.set_axisbelow(True)
-    ax.grid(axis='x', color='#e5e9ef', linewidth=.6)
-    ax.set_xlabel('Tempo (ticks)')
-    ax.set_title(f'Gantt | {simulacao.algoritmo} — histórico: 0 a {fim} ticks')
-    ax.spines[['top', 'right']].set_visible(False)
-    legenda = [Patch(facecolor='#7faacb', label='Execução: número no bloco = CPU'),
-               Patch(facecolor='#151515', edgecolor='#bcbcbc', hatch='///', label='Suspensa'),
-               Patch(facecolor='#d9dde2', label='CPU ociosa'),
-               Patch(facecolor='white', edgecolor='#d9dde2', label='Pronta / aguardando: sem cor')]
-    legenda += [Line2D([], [], marker=m, color=c, linestyle='none', markersize=5, label=n)
-                for m, n, c, _ in EVENTOS.values()]
-    # O layout reserva espaço abaixo do Axes, ainda dentro da Figure.
-    figura.legend(handles=legenda, loc='outside lower center', ncols=2,
-                  fontsize=8, frameon=False)
-    return ax
+
+def tamanho_gantt(dados, escala=24):
+    fim, ids, cpus, _, _ = dados
+    margem = max(140, max((len(str(id_)) * 9 + 75 for id_ in ids), default=140))
+    largura = max(900, margem + max(1, fim) * escala + 30)
+    altura = 80 + len(ids) * 105 + len(cpus) * 36 + 150
+    return largura, altura, margem
+
+
+def marcador(destino, tipo, x, y, cor):
+    """Formas pequenas com centro no tick real, compartilhadas pelos dois destinos."""
+    if tipo == 'chegada':
+        pontos = [(x-4, y-4), (x+4, y-4), (x, y+4)]
+    elif tipo == 'ativacao':
+        pontos = [(x-4, y+4), (x+4, y+4), (x, y-4)]
+    elif tipo == 'sorteio':
+        pontos = [(x, y-4), (x+4, y), (x, y+4), (x-4, y)]
+    elif tipo == 'perda_prazo':
+        destino.linha(x-4, y-4, x+4, y+4, cor)
+        destino.linha(x-4, y+4, x+4, y-4, cor)
+        return
+    elif tipo == 'conclusao':
+        pontos = [(x + 4*math.cos(i*math.pi/4), y + 4*math.sin(i*math.pi/4)) for i in range(8)]
+    else:
+        pontos = [(x-4, y-4), (x+4, y-4), (x+4, y+4), (x-4, y+4)]
+    destino.poligono(pontos, cor)
+
+
+def desenhar_gantt(dados, destino, algoritmo, escala=24):
+    """Ticks viram X; tarefas viram linhas; ambos os destinos recebem o mesmo desenho."""
+    fim, ids, cpus, eventos, grupos = dados
+    largura, altura, margem = tamanho_gantt(dados, escala)
+    linhas = {id_: 70 + i * 105 for i, id_ in enumerate(ids)}
+    linhas_cpu = {cpu: 70 + len(ids)*105 + i*36 for i, cpu in enumerate(cpus)}
+    destino.texto(15, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
+    # Marcas legíveis, sem criar um texto por tick em simulações extensas.
+    minimo = max(1, 65 / escala, max(1, fim) / 200)
+    potencia = 10 ** math.floor(math.log10(minimo))
+    passo = next(m * potencia for m in (1, 2, 5, 10) if m * potencia >= minimo)
+    eixo_x = altura - 150
+    destino.linha(margem, eixo_x, margem + max(1, fim)*escala, eixo_x, '#526171')
+    for tick in range(0, fim + 1, int(passo)):
+        x = margem + tick * escala
+        destino.linha(x, 55, x, altura-150, '#e2e8f0')
+        destino.texto(x, eixo_x+17, tick, centro=True)
+    for id_, y in linhas.items():
+        destino.texto(12, y+10, f'Tarefa {id_}')
+    for cpu, y in linhas_cpu.items():
+        destino.texto(12, y+10, f'CPU {cpu} ociosa')
+    for (tipo, id_, cpu, cor), trechos in grupos.items():
+        y = linhas_cpu[cpu] if tipo == 'cpu_desligada' else linhas[id_]
+        for a, b in trechos:
+            x, comprimento = margem + a*escala, (b-a)*escala
+            destino.retangulo(x, y, comprimento, 22, cor, tipo == 'suspensa')
+            if tipo == 'execucao' and comprimento >= 18:
+                destino.texto(x+comprimento/2, y+11, cpu, cor='#000000', centro=True)
+    for evento in eventos:
+        tipo = evento['tipo']
+        _, cor, deslocamento = EVENTOS[tipo]
+        escolhidas = evento.get('selecionadas', []) if tipo == 'sorteio' else [evento['id_tarefa']]
+        for id_ in escolhidas:
+            marcador(destino, tipo, margem+evento['tick']*escala, linhas[id_]+deslocamento, cor)
+    # Legenda compacta, com as mesmas formas e cores usadas nos eventos.
+    base = altura-105
+    destino.retangulo(15, base-9, 24, 18, '#7faacb')
+    destino.texto(48, base, 'Execução: número no bloco = CPU')
+    destino.retangulo(390, base-9, 24, 18, '#151515', True)
+    destino.texto(423, base, 'Suspensa · pronta/aguardando: sem cor')
+    for i, (tipo, (nome, cor, _)) in enumerate(EVENTOS.items()):
+        x, y = 22 + (i % 3)*280, base+35+(i//3)*28
+        marcador(destino, tipo, x, y, cor)
+        destino.texto(x+14, y, nome)
+    return largura, altura
+
+
+def exportar_svg(simulacao, caminho):
+    dados = preparar_gantt(simulacao)
+    largura, altura, _ = tamanho_gantt(dados)
+    destino = DesenhoSVG(largura, altura)
+    desenhar_gantt(dados, destino, simulacao.algoritmo)
+    caminho = Path(caminho)
+    try:
+        destino.imagem.save_svg(str(caminho))
+    except OSError as erro:
+        raise OSError(erro.errno,
+            f'Não foi possível exportar SVG para {caminho}: {erro.strerror or erro}', str(caminho)) from erro
+    return caminho

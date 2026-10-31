@@ -1,4 +1,4 @@
-"""Testes com arquivos reais; temporários ficam no scratch do Hermes."""
+"""Testes do parser com arquivos reais em diretórios temporários portáveis."""
 
 from pathlib import Path
 import tempfile
@@ -9,9 +9,7 @@ from models import Cpu, EstadoSimulacao, EstadoTarefa, TCB
 
 class TesteParser(unittest.TestCase):
     def setUp(self):
-        scratch = Path("C:/Users/pedro/AppData/Local/hermes/cache/scratch")
-        scratch.mkdir(parents=True, exist_ok=True)
-        self.temporario = tempfile.TemporaryDirectory(prefix="parser-", dir=scratch)
+        self.temporario = tempfile.TemporaryDirectory(prefix="parser-")
         self.addCleanup(self.temporario.cleanup)
         self.pasta = Path(self.temporario.name)
 

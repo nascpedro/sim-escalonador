@@ -1,4 +1,4 @@
-"""SVG vetorial do mesmo Gantt usado na tela, sem depender de Qt."""
+"""API e CLI do SVG vetorial gerado pelo desenho compartilhado."""
 from pathlib import Path
 import subprocess
 import sys
@@ -6,46 +6,39 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
-import matplotlib
-from matplotlib.figure import Figure
+import pickle
 
 from engine import Simulacao
-from gantt import desenhar_gantt
 from models import Cpu, EstadoSimulacao, EstadoTarefa, TCB
-from test.test_gantt import retrato
+
+
+def retrato(sim):
+    return pickle.dumps(sim.historico)
 
 NS = {'s': 'http://www.w3.org/2000/svg'}
 
 
 class TesteExportador(unittest.TestCase):
-    def setUp(self):
-        self.scratch = Path('C:/Users/pedro/AppData/Local/hermes/cache/scratch')
-        self.scratch.mkdir(parents=True, exist_ok=True)
-
     def exportar(self, sim, caminho):
         from exporter import exportar_svg
         self.assertEqual(exportar_svg(sim, caminho), Path(caminho))
         return ET.parse(caminho).getroot()
 
-    def test_svg_mesmos_artistas_historico_real_sem_mutacao_ou_futuro(self):
+    def test_svg_historico_real_sem_mutacao_ou_futuro(self):
         sim = Simulacao(EstadoSimulacao(0, [
             TCB(2, 'FF0000', 0, 1, 5, 1),
             TCB(10, '00FF00', 0, 1, 10, 1)], [Cpu(4), Cpu(7)], 0), 'RM')
         sim.executar_completa()
         antes = retrato(sim)
-        rc_antes = matplotlib.rcParams['svg.fonttype']
-        with tempfile.TemporaryDirectory(dir=self.scratch) as pasta:
+        with tempfile.TemporaryDirectory() as pasta:
             caminho = Path(pasta) / 'gráfico completo ü.svg'
             for fim in (91, 2):
                 raiz = self.exportar(sim, caminho)
                 self.assertEqual(raiz.tag, '{%s}svg' % NS['s'])
-                ax = desenhar_gantt(sim, Figure())
-                artistas = {c.get_gid() for c in ax.collections}
-                grupos = {g.get('id', '') for g in raiz.findall('.//s:g', NS)}
-                self.assertTrue(artistas <= grupos)
-                self.assertTrue(any(g.startswith('execucao-') for g in grupos))
-                self.assertTrue(any(g.startswith('cpu_desligada-') for g in grupos))
-                self.assertIn(f'histórico: 0 a {fim} ticks', ''.join(raiz.itertext()))
+                self.assertTrue(raiz.findall('.//s:rect', NS))
+                self.assertIn(f'0 a {fim} ticks', ''.join(raiz.itertext()))
+                cores = {r.get('fill') for r in raiz.findall('.//s:rect', NS)}
+                self.assertTrue({'#FF0000', '#00FF00', '#d9dde2'} <= cores)
                 self.assertFalse(raiz.findall('.//s:image', NS))
                 self.assertTrue(raiz.findall('.//s:path', NS))
                 if fim == 91:
@@ -54,12 +47,11 @@ class TesteExportador(unittest.TestCase):
             self.assertEqual(len(sim.historico), 92)
             self.assertEqual(sim.instante_atual, 2)
             self.assertEqual(retrato(sim), antes)
-            self.assertEqual(matplotlib.rcParams['svg.fonttype'], rc_antes)
 
     def test_texto_escapado_estado_inicial_vazio_e_rotulos_longos(self):
         id_ = 'ação <x>& identificador muito longo'
         sim = Simulacao(EstadoSimulacao(0, [TCB(id_, '112233', 0, 1, 3, 2)], [Cpu(0)], 0), 'RM')
-        with tempfile.TemporaryDirectory(dir=self.scratch) as pasta:
+        with tempfile.TemporaryDirectory() as pasta:
             caminho = Path(pasta) / 'inicial.svg'
             raiz = self.exportar(sim, caminho)
             self.assertIn(id_, ''.join(raiz.itertext()))
@@ -70,14 +62,14 @@ class TesteExportador(unittest.TestCase):
             sim.avancar()
             raiz = self.exportar(sim, caminho)
             self.assertTrue(raiz.findall('.//s:pattern', NS))
-            self.assertTrue(any(g.get('id', '').startswith('suspensa-')
-                                for g in raiz.findall('.//s:g', NS)))
+            self.assertGreaterEqual(len([r for r in raiz.findall('.//s:rect', NS)
+                                         if r.get('fill', '').startswith('url(')]), 2)
             vazio = Simulacao(EstadoSimulacao(0, [], [], 0), 'RM')
             raiz = self.exportar(vazio, caminho)
             self.assertIn('0 a 0 ticks', ''.join(raiz.itertext()))
 
     def test_cli_real_e_erros_legiveis(self):
-        with tempfile.TemporaryDirectory(dir=self.scratch) as pasta:
+        with tempfile.TemporaryDirectory() as pasta:
             destino = Path(pasta) / 'saída real.svg'
             comando = [sys.executable, '-B', 'exporter.py']
             sucesso = subprocess.run(comando + ['exemplos/configuracao.txt', str(destino)],

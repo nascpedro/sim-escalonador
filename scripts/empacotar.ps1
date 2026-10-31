@@ -1,18 +1,18 @@
 # Gera uma pasta Windows autossuficiente e um ZIP. Não instala dependências.
 $ErrorActionPreference = 'Stop'
 $Raiz = Split-Path $PSScriptRoot -Parent
-$PythonProjeto = Join-Path $Raiz '.venv-windows\Scripts\python.exe'
+$PythonProjeto = Join-Path $Raiz '.venv-ctk\Scripts\python.exe'
 $Dist = Join-Path $Raiz 'dist'
 $Build = Join-Path $Raiz 'build'
 
-# O PATH de desenvolvimento pode conter outra icuuc.dll (ex.: Poppler).
-# O Qt usa a ICU do Windows; restringir a busca evita empacotar uma incompatível.
+# Restringe a busca de DLLs ao Windows durante a análise do build.
 $PathAnterior = $env:PATH
 try {
     $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
     & $PythonProjeto -m PyInstaller --noconfirm --clean --onedir --windowed --name SimuladorSO `
-        --hidden-import matplotlib.backends.backend_svg `
-        --add-data "$Raiz\ui\janela_principal.ui;ui" `
+        --collect-data customtkinter `
+        --copy-metadata customtkinter --copy-metadata drawsvg `
+        --copy-metadata darkdetect --copy-metadata packaging `
         --distpath $Dist --workpath (Join-Path $Build 'pyinstaller') --specpath $Build `
         (Join-Path $Raiz 'gui.py')
     if ($LASTEXITCODE -ne 0) { throw 'Falha no PyInstaller.' }

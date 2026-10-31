@@ -1,31 +1,5 @@
-"""Exportação SVG e CLI: o desenho pertence exclusivamente a gantt.py."""
-from pathlib import Path
-
-from matplotlib import rc_context
-from matplotlib.figure import Figure
-
-from gantt import desenhar_gantt
-
-
-def exportar_svg(simulacao, caminho):
-    """Salva o prefixo visível sem executar ticks ou modificar snapshots.
-
-    Usa o mesmo desenho da tela; bbox_inches inclui legenda e rótulos longos.
-    Não cria diretórios. Falhas de escrita propagam OSError com o destino.
-    """
-    estado = simulacao.historico[simulacao.instante_atual]
-    figura = Figure(figsize=(max(12, min(24, estado.tick * .12)),
-                             max(4, 2 + len(estado.tarefas) * .9 + len(estado.cpus) * .3)))
-    desenhar_gantt(simulacao, figura)
-    destino = Path(caminho)
-    try:
-        # Texto continua texto no SVG, sem alterar rcParams do aplicativo.
-        with rc_context({'svg.fonttype': 'none'}):
-            figura.savefig(destino, format='svg', bbox_inches='tight', facecolor='white')
-    except OSError as erro:
-        raise OSError(erro.errno, f'Não foi possível exportar SVG para {destino}: {erro.strerror}',
-                      str(destino)) from erro
-    return destino
+"""CLI e API de exportação SVG por drawsvg, sem abrir a interface."""
+from gantt import exportar_svg
 
 
 def main(argv=None):

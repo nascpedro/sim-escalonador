@@ -18,6 +18,27 @@ import padroes
 from parser import carregar_configuracao
 
 
+def _formatar_detalhes_tarefa(tarefa):
+    """Monta a representação legível dos atributos e contadores da tarefa selecionada."""
+    cpu = '—' if tarefa.id_cpu_atual is None else tarefa.id_cpu_atual
+    perdeu = 'SIM' if tarefa.perdeu_prazo else 'Não'
+    return (
+        f'Tarefa {tarefa.id}\nEstado: {tarefa.estado_tarefa.name}\nCPU: {cpu}\n'
+        f'Ingresso: {tarefa.ingresso}\nDuração: {tarefa.duracao}\nPeríodo: {tarefa.periodo}\n'
+        f'Prazo relativo: {tarefa.prazo}\nPrazo absoluto: {tarefa.prazo_absoluto}\n'
+        f'Execução / fatia: {tarefa.tempo_exec_instancia} / {tarefa.tempo_exec_quantum}\n'
+        f'Concluídas: {tarefa.instancias_concluidas}/10\n'
+        f'Pendentes: {len(tarefa.ocorrencias_pendentes)}\nPerdeu prazo: {perdeu}\n'
+    )
+
+
+def _formatar_resumo_snapshot(estado):
+    """Monta os contadores de ociosidade das CPUs e os eventos registrados no tick."""
+    ociosas = '\n'.join(f'CPU {c.id_cpu}: {c.tempo_desligada}' for c in estado.cpus)
+    eventos = '\n'.join(str(e) for e in estado.eventos)
+    return f'\nTicks ociosos:\n{ociosas}\n\nEventos do snapshot:\n{eventos}'
+
+
 class DialogoTarefa(tk.Toplevel):
     """Coleta somente alterações; o motor decide se elas são válidas."""
     def __init__(self, janela, tarefa=None):
@@ -91,6 +112,13 @@ class DialogoTarefa(tk.Toplevel):
             alteracoes['estado_tarefa'] = estado
         return alteracoes
 
+    def _mensagem_apos_salvar(self, alteracoes):
+        if self.nova:
+            return 'Tarefa adicionada; snapshots anteriores preservados.'
+        if alteracoes:
+            return 'Tarefa atualizada; snapshots anteriores preservados.'
+        return 'Sem alterações; histórico preservado.'
+
     def salvar(self):
         try:
             alteracoes = self._ler_alteracoes()
@@ -102,9 +130,7 @@ class DialogoTarefa(tk.Toplevel):
             self.erro.configure(text=str(erro), text_color='#a62626')
             return False
         self.janela.atualizar()
-        self.janela.mensagem.configure(text='Tarefa adicionada; snapshots anteriores preservados.' if self.nova else
-            ('Tarefa atualizada; snapshots anteriores preservados.'
-             if alteracoes else 'Sem alterações; histórico preservado.'))
+        self.janela.mensagem.configure(text=self._mensagem_apos_salvar(alteracoes))
         self.destroy()
         return True
 
@@ -330,18 +356,9 @@ class JanelaSimulador(ctk.CTk):
         tarefa = self.tarefa_selecionada()
         texto = 'Abra um arquivo para inspecionar as tarefas.'
         if tarefa is not None:
-            cpu = '—' if tarefa.id_cpu_atual is None else tarefa.id_cpu_atual
-            perdeu = 'SIM' if tarefa.perdeu_prazo else 'Não'
-            texto = (f'Tarefa {tarefa.id}\nEstado: {tarefa.estado_tarefa.name}\nCPU: {cpu}\n'
-                f'Ingresso: {tarefa.ingresso}\nDuração: {tarefa.duracao}\nPeríodo: {tarefa.periodo}\n'
-                f'Prazo relativo: {tarefa.prazo}\nPrazo absoluto: {tarefa.prazo_absoluto}\n'
-                f'Execução / fatia: {tarefa.tempo_exec_instancia} / {tarefa.tempo_exec_quantum}\n'
-                f'Concluídas: {tarefa.instancias_concluidas}/10\n'
-                f'Pendentes: {len(tarefa.ocorrencias_pendentes)}\nPerdeu prazo: {perdeu}\n')
+            texto = _formatar_detalhes_tarefa(tarefa)
         if self.simulacao is not None:
-            estado = self.simulacao.estado_atual
-            texto += '\nTicks ociosos:\n' + '\n'.join(f'CPU {c.id_cpu}: {c.tempo_desligada}' for c in estado.cpus)
-            texto += '\n\nEventos do snapshot:\n' + '\n'.join(str(e) for e in estado.eventos)
+            texto += _formatar_resumo_snapshot(self.simulacao.estado_atual)
         self.detalhes.configure(state='normal')
         self.detalhes.delete('1.0', 'end')
         self.detalhes.insert('1.0', texto)

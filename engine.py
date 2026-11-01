@@ -1,4 +1,4 @@
-"""Motor do Projeto A: histórico, intervenções manuais e evolução por ticks.
+"""Motor da simulação: histórico, intervenções manuais e evolução por ticks.
 
 O snapshot t antecede [t, t+1). Um tick copia o estado, ativa ocorrências,
 despacha, executa uma unidade e verifica prazos. A ordem é parte do modelo:
@@ -174,7 +174,7 @@ class Simulacao:
 
     def _validar_campos_tarefa(self, id_tarefa, alteracoes):
         estado = self.estado_atual
-        # Valida apenas a entrada da edição, não a estrutura inteira do TCB.
+        # Valida apenas a entrada da edição.
         limites = {'ingresso': 0, 'duracao': 1, 'periodo': 1, 'prazo': 1}
         for campo, valor in alteracoes.items():
             if campo in limites:
@@ -200,7 +200,7 @@ class Simulacao:
         if nova.estado_tarefa in ESTADOS_ATIVOS:
             ativacao = anterior.prazo_absoluto - anterior.prazo
             if anterior.estado_tarefa not in ESTADOS_ATIVOS:
-                # Entrar manualmente em PRONTA/EXECUTANDO/SUSPENSA inicia uma ocorrência agora.
+                # Entrar manualmente em PRONTA/EXECUTANDO/SUSPENSA inicia uma ocorrência.
                 ativacao = estado.tick
                 nova.tempo_exec_instancia = 0
                 nova.perdeu_prazo = False
@@ -212,7 +212,7 @@ class Simulacao:
         elif anterior.instancias_concluidas == 0:
             nova.prazo_absoluto = nova.ingresso + nova.prazo
         if nova.estado_tarefa == EstadoTarefa.AGUARDANDO and anterior.estado_tarefa in ESTADOS_ATIVOS:
-            # Abandona a ocorrência e sua fila, sem fabricar conclusões.
+            # Abandona a ocorrência e sua fila.
             nova.tempo_exec_instancia = 0
             nova.perdeu_prazo = False
             nova.ocorrencias_pendentes.clear()

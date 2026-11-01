@@ -475,10 +475,6 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == '--exportar':
         from exporter import main as exportar_cli
         return exportar_cli(sys.argv[2:])
-    if len(sys.argv) > 1 and sys.argv[1] == '--verificar-interface':
-        from scripts.verificar_interface import verificar
-        verificar(JanelaSimulador, sys.argv[2], sys.argv[3])
-        return 0
     ctk.set_appearance_mode('light')
     janela = JanelaSimulador()
     if len(sys.argv) > 1:

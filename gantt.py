@@ -38,7 +38,7 @@ class DesenhoCanvas:
     def retangulo(self, x, y, largura, altura, cor, hachura=False):
         textura = ''
         if hachura == 'ociosa':
-            textura = '@' + (Path(__file__).parent / 'assets/ociosa.xbm').as_posix()
+            textura = '@' + (Path(__file__).with_name('ociosa.xbm')).as_posix()
         elif hachura:
             textura = 'gray50'
         self.canvas.create_rectangle(x, y, x+largura, y+altura,

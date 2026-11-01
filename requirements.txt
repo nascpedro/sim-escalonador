@@ -1,2 +1,0 @@
-customtkinter==6.0.0
-drawsvg==2.4.2

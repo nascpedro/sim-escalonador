@@ -1,155 +1,131 @@
-# Simulador de escalonamento — Projeto A
+# Simulador de escalonamento - Projeto A
 
-Simulação preemptiva RM/EDF com múltiplas CPUs, histórico por tick e interface
-CustomTkinter. O Canvas do Tkinter mostra o Gantt; drawsvg gera o arquivo vetorial.
-O gráfico reúne a execução das CPUs no topo e as tarefas em faixas compactas:
-contorno indica pronta, pontilhado indica suspensão e hachura indica CPU ociosa.
-Os rótulos ficam fixos durante a rolagem horizontal; preempções têm símbolo próprio.
+Versão de envio ao Moodle. Esta pasta contém exatamente **20 arquivos**, todos
+na raiz: 10 módulos Python, 5 configurações, 1 textura, 1 script de construção,
+1 PDF, este README e 1 executável. Envie os arquivos avulsos, sem compactar.
 
-## Executar no Windows
+## Executar sem instalar Python ou bibliotecas
 
-O ambiente `.venv-ctk` já está preparado nesta máquina. Na raiz do projeto:
+No Windows x64, abra **SimuladorSO.exe**. Escolha Abrir arquivo e selecione uma
+das configurações desta pasta, ou use Nova simulação para incluir tarefas.
+O executável contém Python, Tcl/Tk, CustomTkinter e drawsvg. Não separe nenhum
+outro arquivo de runtime: o programa foi gerado no modo onefile do PyInstaller.
+Na inicialização ele extrai seus recursos para uma pasta temporária.
 
-```powershell
-.\.venv-ctk\Scripts\python.exe gui.py exemplos/configuracao.txt
-```
-
-Em outra instalação, prepare Python 3.11 com `uv`:
+Também aceita um arquivo por argumento:
 
 ```powershell
-uv venv --python 3.11 .venv-ctk
-uv pip install --python .venv-ctk/Scripts/python.exe -r requirements.txt
-.\.venv-ctk\Scripts\python.exe gui.py
+.\SimuladorSO.exe configuracao.txt
+.\SimuladorSO.exe --exportar exemplo_edf.txt resultado.svg
 ```
 
-Abra um arquivo ou clique em Nova simulação e Adicionar. Selecione uma tarefa
-para inspecionar, editar ou remover; avance e volte pelos ticks.
-Zoom e rolagem só alteram a visualização. Uma edição aceita descarta o futuro do
-instante selecionado e preserva os estados anteriores. Executar até o fim termina
-após dez ocorrências concluídas por tarefa. Ao concluir, o SVG é salvo ao lado da
-configuração; nomes existentes recebem sufixo numérico. Sem arquivo de entrada,
-a janela solicita o destino do SVG final. Exportar SVG permite
-escolher outro destino ou salvar um estado intermediário.
+A interface permite avançar/voltar, alterar tarefas e configuração, executar até
+dez conclusões por tarefa e exportar SVG. Ao terminar pela janela, salva o SVG ao
+lado da configuração sem sobrescrever arquivos existentes. Os SVGs resultantes
+são saídas do programa; não fazem parte dos 20 arquivos originais da entrega.
 
-## Arquivo de entrada
+## Gerar novamente o executável: o equivalente ao make
 
-```text
-algoritmo;quantum;quantidade_cpus
-id;cor;ingresso;duracao;periodo;prazo;lista_eventos
+O arquivo **make.ps1** usa **PyInstaller**. Para reconstruir, é necessário Python
+3.11 x64 no Windows e acesso à internet para obter as dependências fixadas no
+próprio script. No PowerShell, dentro desta pasta:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\make.ps1
 ```
 
-Algoritmos: RM e EDF. Tempos em ticks inteiros; cores RGB hexadecimais. Espaços,
-linhas vazias, maiúsculas/minúsculas e terminador `;` opcional são tratados.
-Aperiódicas (período zero) são ignoradas com aviso. A lista de eventos pertence ao
-Projeto B e não é executada. Erros informam o motivo e a linha quando aplicável.
-Prazo zero em uma aperiódica é aceito para ignorá-la; tarefas periódicas continuam
-exigindo prazo positivo.
+Se o comando Python tiver outro nome ou caminho:
 
-## Valores padrão
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\make.ps1 -Python "C:\caminho\python.exe"
+```
 
-As sugestões ficam em `padroes.py` e podem ser substituídas antes de aplicar:
+O script cria um ambiente virtual temporário, instala as versões fixadas e gera
+somente SimuladorSO.exe nesta pasta. Os arquivos auxiliares de construção ficam
+fora dela e são removidos ao final. Feche o executável antes de reconstruí-lo.
+A opção -UsarAmbienteAtual reaproveita um Python que já tenha as quatro
+dependências instaladas; serve para desenvolvimento, sem criar outro ambiente.
 
-| Característica | Sugestão |
+Para executar diretamente o código, instale customtkinter==6.0.0 e drawsvg==2.4.2
+no seu Python e use `python -B gui.py configuracao.txt`. O `-B` evita criar caches
+de bytecode ao lado dos fontes.
+
+## Configurações incluídas
+
+| Arquivo | Exemplo |
 |---|---|
-| Algoritmo, quantum, CPUs | RM, 0 (sem limite de fatia), 2 |
-| ID e cor | Próximo inteiro positivo livre e cor disponível |
-| Ingresso | 0 no arquivo; tick atual na inclusão manual |
-| Duração, período, prazo relativo | 1, 10, 10 ticks |
+| configuracao.txt | RM, duas CPUs, três tarefas; termina no tick 185. |
+| exemplo_edf.txt | EDF, duas CPUs; tarefa aperiódica ignorada com aviso; termina no tick 94. |
+| rm-perda-prazo.txt | RM com perda de prazo, exemplo da figura 2.6 do capítulo. |
+| edf-prazos.txt | Mesmo conjunto da figura 2.6 usando EDF. |
+| sobreposicao.txt | Duração 5 e período 3; fila de ocorrências e dez conclusões no tick 50. |
 
-O botão Sugerir padrões preenche o formulário; Salvar/Aplicar confirma a mudança.
-Na edição, ingresso permanece compatível com o histórico e duração supera o
-progresso já executado. Estado, CPU, contadores e prazo absoluto são controlados
-pelo motor; a nova tarefa começa AGUARDANDO, sem execuções anteriores.
+Formato: `algoritmo;quantum;quantidade_cpus`, seguido de uma tarefa por linha:
+`id;cor;ingresso;duracao;periodo;prazo;lista_eventos`. Campos de configuração
+vazios recebem sugestões com aviso; valores explícitos prevalecem. Aperiódicas
+(período zero) são ignoradas no Projeto A, inclusive com prazo zero. O campo
+lista_eventos pertence ao Projeto B e não é executado.
 
-No arquivo, campos de configuração vazios recebem sugestões com avisos por
-campo. Valores explícitos prevalecem. Cabeçalho/registro ausente, número errado
-de campos e valores explícitos inválidos continuam sendo erros. Por exemplo:
+Os exemplos e o PDF foram reunidos na raiz para o envio. O conteúdo corresponde
+aos arquivos citados no PDF; referências antigas à subpasta exemplos indicam os
+mesmos arquivos agora presentes nesta pasta.
 
-```text
-;;
-;;;;;;
-```
-
-Isso cria uma tarefa com os padrões. IDs e cores explícitos das linhas seguintes
-são reservados antes de gerar sugestões.
-
-## Roteiro para explicar o código
+## Organização do código
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `models.py` | Dados de tarefa, ocorrência, CPU e snapshot. |
-| `scheduler.py` | Ordenação RM/EDF e desempates. |
-| `engine.py` | Ativar, despachar, executar, verificar prazos e guardar histórico. |
-| `validacao.py` | Regras básicas de inteiros, cores RGB e algoritmo. |
-| `padroes.py` | Valores iniciais e sugestões de ID/cor disponíveis. |
-| `parser.py` | Converter o arquivo em estado inicial, algoritmo e avisos. |
-| `linha_tempo.py` | Converter o histórico selecionado em intervalos. |
-| `gantt.py` | Um desenho para Canvas e drawsvg: retângulos, linhas, textos e símbolos. |
-| `exporter.py` | CLI de execução completa e exportação SVG. |
-| `gui.py` | Controles, inspeção e chamadas ao motor; execução em lotes por `after()`. |
+| models.py | TCB, ocorrência, CPU e snapshot. |
+| scheduler.py | Prioridades RM/EDF, desempates e sorteios. |
+| engine.py | Histórico, intervenções e ciclo do tick. |
+| parser.py | Leitura e validação da configuração. |
+| padroes.py | Valores sugeridos de configuração e tarefa. |
+| validacao.py | Regras básicas de inteiros, cores e algoritmo. |
+| linha_tempo.py | Intervalos de execução, prontas, suspensão e ociosidade. |
+| gantt.py | Desenho compartilhado entre Canvas e SVG. |
+| exporter.py | Exportação por linha de comando. |
+| gui.py | Interface CustomTkinter e formulários. |
 
-CustomTkinter fornece os controles e a aparência; Tkinter fornece o Canvas;
-drawsvg escreve o SVG. O projeto posiciona os intervalos e os eventos. Não há
-Qt Designer, Matplotlib ou geração manual de XML na aplicação atual.
+O ciclo do motor é copiar → ativar → despachar → executar → verificar prazos.
+O estado no tick t antecede [t,t+1). Ocorrências sobrepostas aguardam em FIFO.
+O escalonador é global e preemptivo. Quantum zero mantém preempção e remove
+somente o limite de fatia. O Gantt mostra CPUs no topo, prontas com contorno,
+suspensas com pontilhado e preempções com duas barras magenta. Chegada usa o
+polígono circular azul; conclusão usa o triângulo verde para baixo.
 
-Para acompanhar o motor, comece por `_executar_um_tick` em `engine.py`:
+O PDF **Projeto-A-Telas-e-Origem-dos-Dados.pdf** apresenta as telas, a função dos
+controles e a origem dos dados. A textura ociosa.xbm é usada pelo Canvas e
+incluída no executável pelo script. O SVG usa sua própria textura vetorial.
+
+## Bibliotecas e licença
+
+CustomTkinter: https://github.com/TomSchimansky/CustomTkinter
+
+drawsvg: https://github.com/cduck/drawsvg
+
+A interface usa também Tkinter/Tcl/Tk, fornecidos com o Python. Metadados e
+licenças das bibliotecas coletadas acompanham o executável. A licença do código
+do projeto está reproduzida abaixo para manter a entrega em 20 arquivos.
 
 ```text
-estado t → copiar → ativar → despachar → executar → verificar prazos → estado t+1
+MIT License
+
+Copyright (c) 2026 Pedro Nascimento
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
-
-O snapshot `t` antecede o intervalo `[t, t+1)`. As quatro etapas têm funções
-próprias: `_ativar_tarefas`, `_despachar`, `_executar_tarefas` e `_verificar_prazos`.
-A execução chama operações menores: `_executar_uma_unidade`,
-`_concluir_ocorrencia` e `_registrar_fim_quantum`. `_iniciar_ocorrencia` também
-é usada ao promover uma ocorrência que esperava em FIFO.
-
-RM prioriza o menor período; EDF prioriza o menor prazo absoluto. Desempates:
-quem executava, prazo relativo, ingresso, duração e sorteio. Ocorrências da mesma
-tarefa esperam em FIFO e preservam seus prazos; somente uma executa por vez.
-
-O motor está dividido em quatro seções: navegação/histórico, intervenções
-manuais, ciclo automático e operações das ocorrências/CPUs. Para explicar uma
-edição, siga `modificar_tarefa_em_execucao`: validar campos → preparar a cópia →
-ajustar ocorrência e fila → verificar CPU → aplicar. Rejeições não chegam à
-etapa de aplicação. `_substituir_estado_atual` concentra o descarte do futuro.
-
-`concluida` consulta o término; `pode_continuar_execucao` explica impedimentos.
-A CLI e os lotes da interface usam essa mesma decisão. A GUI controla quando
-agendar outro lote, mantendo a janela responsiva.
-
-No parser, comece por `carregar_configuracao`: `_ler_registros` →
-`_ler_cabecalho` → `_ler_tarefas` → construir o estado inicial. `_ler_tarefas`
-reserva IDs/cores explícitos antes das sugestões e usa `_ler_tarefa` para cada
-registro. As regras básicas estão em `validacao.py`; o parser acrescenta o
-número da linha às mensagens de erro.
-
-## Exemplos e verificação
-
-- `exemplos/configuracao.txt`: duas CPUs e três tarefas; termina no tick 185.
-- `exemplos/rm-perda-prazo.txt` e `exemplos/edf-prazos.txt`: figura 2.6 do capítulo,
-  com IDs 1 e 2 para A e B. Até o tick 60, RM perde o prazo de 2 em 50; EDF não.
-- `exemplos/sobreposicao.txt`: duração 5 e período 3; dez conclusões no tick 50.
-
-```powershell
-.\.venv-ctk\Scripts\python.exe -B -m unittest discover -v
-.\.venv-ctk\Scripts\python.exe exporter.py exemplos/configuracao.txt gantt.svg
-```
-
-O SVG contém todo o prefixo selecionado e sua legenda, independentemente do zoom.
-Na CLI, a simulação é executada até o fim. O diretório de destino deve existir.
-
-## Documentação e entrega
-
-- [PDF com as telas e a origem dos dados](output/pdf/Projeto-A-Telas-e-Origem-dos-Dados.pdf), para envio avulso no Moodle.
-- [Decisões e convenções](docs/decisoes.md).
-- [Plano e verificação da refatoração](docs/refatoracao.md).
-- [Requisitos ainda pendentes](docs/pendencias.md).
-- [Empacotamento e validação Windows](docs/distribuicao.md).
-
-O enunciado local está em `referencias/simulador-escalonamento.md` e `.pdf`,
-preservado fora do versionamento. Os protótipos anteriores e a implementação Qt
-permanecem acessíveis no histórico Git (`94ace73`). A versão organizada para entrega está na branch
-`entrega`, derivada de `codex/customtkinter-drawsvg`; a main permanece na versão anterior.
-
-**Ainda falta:** homologação em Windows limpo e ensaio dos exemplos pelo autor.

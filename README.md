@@ -142,6 +142,7 @@ Na CLI, a simulação é executada até o fim. O diretório de destino deve exis
 ## Documentação e entrega
 
 - [PDF com as telas e a origem dos dados](output/pdf/Projeto-A-Telas-e-Origem-dos-Dados.pdf), para envio avulso no Moodle.
+- [Versão LaTeX simples para o Overleaf](output/overleaf/projeto-a/main.tex), com capturas na pasta `imagens` e instruções no `LEIA-ME.txt`.
 - [Decisões e convenções](docs/decisoes.md).
 - [Plano e verificação da refatoração](docs/refatoracao.md).
 - [Requisitos ainda pendentes](docs/pendencias.md).

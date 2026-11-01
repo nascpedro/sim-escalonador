@@ -225,3 +225,7 @@ __marimo__/
 #Enunciado do simulador:
 simulador-escalonamento.md
 simulador-escalonamento.pdf
+
+# Artefatos compilados/importáveis do relatório LaTeX; fontes e imagens são versionados.
+/output/overleaf/*.pdf
+/output/overleaf/*.zip

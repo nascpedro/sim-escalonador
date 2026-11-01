@@ -1,0 +1,22 @@
+Projeto LaTeX para o Overleaf
+
+Arquivo principal: main.tex
+Compilador: pdfLaTeX (tambem compativel com XeLaTeX/Tectonic).
+
+Importe o ZIP do projeto no Overleaf ou envie main.tex e a pasta imagens,
+preservando a estrutura dos diretorios. Defina main.tex como documento principal.
+
+O documento usa article, papel A4 e a formatacao padrao do LaTeX. Os unicos
+pacotes sao inputenc, fontenc, babel e graphicx. Nao usa cores de texto,
+cabecalhos personalizados ou tabelas. As cores pertencem somente as capturas.
+
+Para incluir autores, edite o comando author no inicio de main.tex. Um exemplo
+esta no comentario imediatamente acima dele. Nenhuma identificacao foi inventada.
+
+As imagens foram extraidas do PDF fornecido e correspondem a versao atual do
+simulador. O texto foi reorganizado em secoes e listas description, preservando
+as explicacoes dos controles, simbolos e origens das informacoes.
+
+O ZIP serve somente para importacao no Overleaf. Nao o envie ao Moodle, que
+proibe arquivos compactados. Para a entrega, baixe o PDF compilado do Overleaf.
+Este projeto fica separado da pasta envio de 20 arquivos do simulador.

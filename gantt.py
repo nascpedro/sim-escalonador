@@ -168,22 +168,23 @@ def marcador(destino, tipo, x, y, cor):
     destino.poligono(pontos, cor)
 
 
-def desenhar_gantt(dados, destino, algoritmo, escala=24):
-    """O mesmo desenho para tela e SVG; rótulos de CPU não alteram sua numeração."""
-    fim, ids, cpus, eventos, grupos = dados
-    largura, altura, margem = tamanho_gantt(dados, escala)
-    linhas_cpu, linhas, eixo_x = geometria_gantt(dados)
-    destino.texto(margem, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
+def _passo_grade_tempo(fim, escala):
+    """Escolhe passo em múltiplos de 1, 2, 5 ou 10 para evitar sobreposição no eixo X."""
     minimo = max(1, 50 / escala, max(1, fim) / 200)
     potencia = 10 ** math.floor(math.log10(minimo))
-    passo = next(m * potencia for m in (1, 2, 5, 10) if m * potencia >= minimo)
+    return int(next(m * potencia for m in (1, 2, 5, 10) if m * potencia >= minimo))
+
+
+def _desenhar_eixo_tempo(destino, fim, margem, eixo_x, escala):
+    passo = _passo_grade_tempo(fim, escala)
     destino.linha(margem, eixo_x, margem + max(1, fim)*escala, eixo_x, '#526171')
-    for tick in range(0, fim + 1, int(passo)):
+    for tick in range(0, fim + 1, passo):
         x = margem + tick * escala
         destino.linha(x, 40, x, eixo_x, '#e2e8f0')
         destino.texto(x, eixo_x+17, tick, centro=True)
-    desenhar_rotulos(dados, destino)
 
+
+def _desenhar_barras(destino, grupos, linhas_cpu, linhas, margem, escala):
     for (tipo, id_, cpu, cor), trechos in grupos.items():
         y = linhas_cpu[cpu] if tipo == 'cpu_desligada' else linhas[id_]
         textura = 'ociosa' if tipo == 'cpu_desligada' else tipo == 'suspensa'
@@ -200,6 +201,9 @@ def desenhar_gantt(dados, destino, algoritmo, escala=24):
                 if comprimento >= len(rotulo)*9+8:
                     destino.texto(x+comprimento/2, linhas_cpu[cpu]+10, rotulo,
                                   cor=cor_texto(cor), centro=True)
+
+
+def _desenhar_eventos(destino, eventos, linhas, margem, escala):
     for evento in eventos:
         tipo = evento['tipo']
         _, cor, deslocamento = EVENTOS[tipo]
@@ -207,6 +211,8 @@ def desenhar_gantt(dados, destino, algoritmo, escala=24):
         for id_ in escolhidas:
             marcador(destino, tipo, margem+evento['tick']*escala, linhas[id_]+deslocamento, cor)
 
+
+def _desenhar_legenda(destino, margem, eixo_x):
     base = eixo_x+48
     destino.texto(margem, base, 'Blocos: CPU mostra tarefa; tarefa mostra o número da CPU.')
     estilos = [('Execução', '#7faacb', False), ('Pronta (só contorno)', '', False),
@@ -219,6 +225,19 @@ def desenhar_gantt(dados, destino, algoritmo, escala=24):
         x, y = margem+12+(i % 3)*260, base+78+(i//3)*24
         marcador(destino, tipo, x, y, cor)
         destino.texto(x+21, y, nome)
+
+
+def desenhar_gantt(dados, destino, algoritmo, escala=24):
+    """O mesmo desenho para tela e SVG; rótulos de CPU não alteram sua numeração."""
+    fim, ids, cpus, eventos, grupos = dados
+    largura, altura, margem = tamanho_gantt(dados, escala)
+    linhas_cpu, linhas, eixo_x = geometria_gantt(dados)
+    destino.texto(margem, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
+    _desenhar_eixo_tempo(destino, fim, margem, eixo_x, escala)
+    desenhar_rotulos(dados, destino)
+    _desenhar_barras(destino, grupos, linhas_cpu, linhas, margem, escala)
+    _desenhar_eventos(destino, eventos, linhas, margem, escala)
+    _desenhar_legenda(destino, margem, eixo_x)
     return largura, altura
 
 

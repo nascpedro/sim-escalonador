@@ -216,6 +216,10 @@ class Simulacao:
             nova.tempo_exec_instancia = 0
             nova.perdeu_prazo = False
             nova.ocorrencias_pendentes.clear()
+        self._recalcular_prazos_pendentes(anterior, nova)
+
+    def _recalcular_prazos_pendentes(self, anterior, nova):
+        """Atualiza os prazos da fila FIFO de sobreposição quando o prazo ou ingresso mudam."""
         if nova.prazo != anterior.prazo:
             for ocorrencia in nova.ocorrencias_pendentes:
                 ocorrencia.prazo_absoluto = ocorrencia.ativacao + nova.prazo
@@ -263,6 +267,15 @@ class Simulacao:
         estado.tick += 1
         return estado
 
+    def _deve_ativar_no_tick(self, tarefa, t):
+        """Verdadeiro no instante de ingresso e nos múltiplos exatos do período."""
+        return t >= tarefa.ingresso and (t - tarefa.ingresso) % tarefa.periodo == 0
+
+    def _total_ocorrencias_admitidas(self, tarefa):
+        """Soma concluídas, enfileiradas e a ocorrência atualmente ativa."""
+        ativa = tarefa.estado_tarefa != EstadoTarefa.AGUARDANDO
+        return tarefa.instancias_concluidas + len(tarefa.ocorrencias_pendentes) + int(ativa)
+
     def _ativar_tarefas(self, estado):
         t = estado.tick
         for tarefa in estado.tarefas:
@@ -270,17 +283,14 @@ class Simulacao:
                 estado.eventos.append(dict(tipo='chegada', tick=t, id_tarefa=tarefa.id))
             if tarefa.estado_tarefa == EstadoTarefa.FINALIZADA:
                 continue
-            if t < tarefa.ingresso or (t - tarefa.ingresso) % tarefa.periodo != 0:
+            if not self._deve_ativar_no_tick(tarefa, t):
                 continue
-
-            ativa = tarefa.estado_tarefa != EstadoTarefa.AGUARDANDO
             # A parada em dez execuções também limita o trabalho já admitido.
-            total = tarefa.instancias_concluidas + len(tarefa.ocorrencias_pendentes) + int(ativa)
-            if total >= 10:
+            if self._total_ocorrencias_admitidas(tarefa) >= 10:
                 continue
             ocorrencia = Ocorrencia(t, t + tarefa.prazo)
             estado.eventos.append(dict(tipo='ativacao', tick=t, id_tarefa=tarefa.id))
-            if not ativa:
+            if tarefa.estado_tarefa == EstadoTarefa.AGUARDANDO:
                 self._iniciar_ocorrencia(tarefa, ocorrencia)
             elif tarefa.prazo_absoluto - tarefa.prazo != t:
                 # Uma ativação manual no próprio instante já representa esta ocorrência.
@@ -292,25 +302,36 @@ class Simulacao:
         sorteios = []
         # Consultar a política antes de apagar quem estava executando (desempate).
         ordenadas = escalonar(candidatas, estado.algoritmo, sorteios)
-        ids = [t.id for t in ordenadas[:len(estado.cpus)]]
-        # Perder a CPU por decisão do escalonador é preempção. Migração e
-        # conclusão não entram aqui: o evento descreve a interrupção da tarefa.
+        ids_selecionadas = [t.id for t in ordenadas[:len(estado.cpus)]]
+        self._registrar_preempcoes(estado, candidatas, ids_selecionadas)
+        self._registrar_sorteios(estado, sorteios, ids_selecionadas)
+        self._alocar_cpus(estado, ordenadas)
+
+    def _registrar_preempcoes(self, estado, candidatas, ids_selecionadas):
+        """Perder a CPU por decisão do escalonador é preempção. Migração e
+        conclusão não entram aqui: o evento descreve a interrupção da tarefa.
+        """
         for tarefa in candidatas:
-            if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO and tarefa.id not in ids:
+            if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO and tarefa.id not in ids_selecionadas:
                 estado.eventos.append(dict(tipo='preempcao', tick=estado.tick,
                     id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
+
+    def _registrar_sorteios(self, estado, sorteios, ids_selecionadas):
         for indice, ordem in enumerate(sorteios):
             estado.eventos.insert(indice, dict(
                 tipo='sorteio', tick=estado.tick, ordem=ordem,
-                selecionadas=[id_ for id_ in ordem if id_ in ids]))
+                selecionadas=[id_ for id_ in ordem if id_ in ids_selecionadas]))
+
+    def _alocar_cpus(self, estado, tarefas_ordenadas):
+        """Limpa a alocação anterior e vincula cada CPU livre à próxima candidata eleita."""
         for tarefa in estado.tarefas:
             tarefa.id_cpu_atual = None
             if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO:
                 tarefa.estado_tarefa = EstadoTarefa.PRONTA
         for indice, cpu in enumerate(estado.cpus):
             cpu.id_tarefa_alocada = None
-            if indice < len(ordenadas):
-                tarefa = ordenadas[indice]
+            if indice < len(tarefas_ordenadas):
+                tarefa = tarefas_ordenadas[indice]
                 cpu.id_tarefa_alocada = tarefa.id
                 tarefa.id_cpu_atual = cpu.id_cpu
                 tarefa.estado_tarefa = EstadoTarefa.EXECUTANDO

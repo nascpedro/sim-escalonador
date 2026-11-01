@@ -104,7 +104,9 @@ def _ler_tarefa(campos, linha, ids_existentes):
     ingresso = _inteiro(ingresso, "ingresso", 0, linha)
     duracao = _inteiro(duracao, "duracao", 1, linha)
     periodo = _inteiro(periodo, "periodo", 0, linha)
-    prazo = _inteiro(prazo, "prazo", 1, linha)
+    # Aperiódicas não são executadas no Projeto A: prazo zero não deve impedir
+    # que o registro seja ignorado com aviso. Periódicas exigem prazo positivo.
+    prazo = _inteiro(prazo, "prazo", 0 if periodo == 0 else 1, linha)
     return TCB(identificador, cor, ingresso, duracao, periodo, prazo)
 
 

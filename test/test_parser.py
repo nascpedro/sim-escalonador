@@ -153,6 +153,29 @@ class TesteParser(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"[Ll]inha 2:.*duracao"):
             self.carregar("RM;0;1\n1;FFFFFF;0;0;0;5;")
 
+    def test_exemplo_edf_ignora_aperiodica_com_prazo_zero(self):
+        from engine import Simulacao
+
+        estado, algoritmo, avisos = self.carregar(
+            "edf;3;2\n\n1;e6194b;0;3;7;7\n2;3cb44b;0;2;5;4;\n"
+            "3;4363d8;2;2;10;10;\n5;f58231;0;1;0;0;\n")
+        self.assertEqual((algoritmo, estado.quantum, len(estado.cpus)), ('EDF', 3, 2))
+        self.assertEqual([t.id for t in estado.tarefas], [1, 2, 3])
+        self.assertEqual(len(avisos), 1)
+        self.assertRegex(avisos[0], r'Linha 6:.*5.*aperiódica ignorada')
+        final = Simulacao(estado, algoritmo).executar_completa()
+        self.assertEqual(final.tick, 94)
+        self.assertEqual([t.instancias_concluidas for t in final.tarefas], [10, 10, 10])
+
+    def test_prazo_zero_so_e_aceito_para_aperiodica_ignorada(self):
+        estado, _, avisos = self.carregar('RM;0;1\n1;ABCDEF;0;1;0;0;')
+        self.assertEqual(estado.tarefas, [])
+        self.assertEqual(len(avisos), 1)
+        for periodo, prazo in [(5, 0), (0, -1), (0, 'texto')]:
+            with self.subTest(periodo=periodo, prazo=prazo):
+                with self.assertRaisesRegex(ValueError, r'Linha 2:.*prazo'):
+                    self.carregar(f'RM;0;1\n1;ABCDEF;0;1;{periodo};{prazo};')
+
     def test_erro_de_io_informa_caminho_e_motivo(self):
         from parser import carregar_configuracao
 

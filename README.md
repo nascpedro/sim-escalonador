@@ -39,6 +39,8 @@ Algoritmos: RM e EDF. Tempos em ticks inteiros; cores RGB hexadecimais. Espaços
 linhas vazias, maiúsculas/minúsculas e terminador `;` opcional são tratados.
 Aperiódicas (período zero) são ignoradas com aviso. A lista de eventos pertence ao
 Projeto B e não é executada. Erros informam o motivo e a linha quando aplicável.
+Prazo zero em uma aperiódica é aceito para ignorá-la; tarefas periódicas continuam
+exigindo prazo positivo.
 
 ## Valores padrão
 

@@ -113,6 +113,10 @@ tarefas, CPUs ou duração. Campos de configuração vazios recebem os padrões 
 `padroes.py`, com aviso individual; valores explícitos inválidos e formato errado
 são rejeitados. Eventos vazios são normais e não recebem valores do Projeto B.
 
+O prazo zero é aceito em registros aperiódicos (período zero), pois não são
+executados no Projeto A; eles são ignorados com aviso. Periódicas continuam
+exigindo prazo positivo. Prazos negativos ou não inteiros são rejeitados.
+
 Os padrões são RM, quantum 0, duas CPUs, duração 1, período e prazo 10.
 São escolhas didáticas, editáveis, sem tentativa de inferir um conjunto escalonável.
 ID e cor sugeridos ficam livres; IDs explícitos posteriores no arquivo são

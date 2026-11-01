@@ -27,7 +27,7 @@
 - [x] Imagem final automática sem sobrescrever arquivos existentes.
 - [x] Parser de arquivos externos, avisos de aperiódicas e erros com motivo/linha.
 - [x] Exemplos das figuras 2.5 e 2.6 do capítulo em testes executáveis.
-- [x] 93 testes passaram na versão atual, sem dependências da interface antiga.
+- [x] 95 testes passaram na versão atual, incluindo aperiódicas com prazo zero.
 - [x] Novo pacote passou em três exportações e duas execuções da janela, com
   SVG automático e fechamento. ZIP de cerca de 11 MiB conferido por CRC.
 

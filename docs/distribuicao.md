@@ -45,7 +45,7 @@ Uso da exportação sem abrir janela:
 
 ## Limites da validação
 
-Resultado local em 31/10/2026: **93 testes aprovados, sem testes ignorados**.
+Resultado local em 31/10/2026: **95 testes aprovados, sem testes ignorados**.
 O pacote passou em três exportações (SVG vetorial completo), uma entrada
 inválida e duas inicializações/execuções/fechamentos da interface empacotada. Cada
 execução da janela chegou ao tick 185 com 30 conclusões e gerou SVG automático.

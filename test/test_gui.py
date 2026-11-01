@@ -148,6 +148,25 @@ class TestInterface(unittest.TestCase):
         self.assertIsNone(self.janela.timer)
         self.assertEqual(self.janela.simulacao.instante_atual, 0)
 
+    def test_rotulos_fixos_na_horizontal_e_sincronizados_na_vertical(self):
+        tarefas = [f'{i};{i*1000:06X};0;1;100;100;' for i in range(1, 26)]
+        self.caminho.write_text('RM;0;2\n'+'\n'.join(tarefas), encoding='utf-8')
+        self.janela.geometry('980x650')
+        self.janela.deiconify()
+        self.janela.carregar_arquivo(self.caminho)
+        self.janela.simulacao.avancar(20)
+        self.janela.atualizar()
+        self.janela.update()
+        rotulos = self.janela.rotulos
+        posicoes = [rotulos.coords(item) for item in rotulos.find_all()]
+        self.janela.canvas.xview_moveto(1)
+        self.janela.update()
+        self.assertEqual(posicoes, [rotulos.coords(item) for item in rotulos.find_all()])
+        self.assertEqual(rotulos.canvasx(0), 0)
+        self.janela.canvas.yview_moveto(1)
+        self.janela.update()
+        self.assertAlmostEqual(rotulos.canvasy(0), self.janela.canvas.canvasy(0), delta=1)
+
     def test_muitas_tarefas_tem_rolagem_e_controles_cabem_na_janela_minima(self):
         tarefas = [f'{i};{i*1000:06X};0;1;100;100;' for i in range(1, 26)]
         self.caminho.write_text('RM;0;2\n'+'\n'.join(tarefas), encoding='utf-8')

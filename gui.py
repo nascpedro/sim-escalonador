@@ -11,7 +11,8 @@ from tkinter import filedialog
 import customtkinter as ctk
 
 from engine import Simulacao
-from gantt import DesenhoCanvas, desenhar_gantt, exportar_svg, preparar_gantt, tamanho_gantt
+from gantt import (DesenhoCanvas, desenhar_gantt, desenhar_rotulos, exportar_svg,
+                   preparar_gantt, tamanho_gantt)
 from models import EstadoTarefa, EstadoSimulacao, Cpu, TCB
 import padroes
 from parser import carregar_configuracao
@@ -153,23 +154,25 @@ class JanelaSimulador(ctk.CTk):
     def _montar_grafico(self):
         painel = ctk.CTkFrame(self)
         painel.grid(row=2, column=0, padx=(12, 6), sticky='nsew')
-        painel.grid_columnconfigure(0, weight=1)
+        painel.grid_columnconfigure(1, weight=1)
         painel.grid_rowconfigure(1, weight=1)
         zoom = ctk.CTkFrame(painel, fg_color='transparent')
-        zoom.grid(row=0, column=0, sticky='w', padx=8, pady=8)
+        zoom.grid(row=0, column=0, columnspan=2, sticky='w', padx=8, pady=8)
         self.botoes_zoom = []
         for i, (texto, acao) in enumerate((('− Zoom', lambda: self.zoom(.8)),
                 ('+ Zoom', lambda: self.zoom(1.25)), ('Ajustar tudo', self.ajustar))):
             botao = ctk.CTkButton(zoom, text=texto, command=acao, width=100)
             botao.grid(row=0, column=i, padx=4)
             self.botoes_zoom.append(botao)
+        self.rotulos = tk.Canvas(painel, width=120, bg='white', highlightthickness=0)
+        self.rotulos.grid(row=1, column=0, sticky='ns')
         self.canvas = tk.Canvas(painel, bg='white', highlightthickness=0)
-        self.canvas.grid(row=1, column=0, sticky='nsew')
+        self.canvas.grid(row=1, column=1, sticky='nsew')
         horizontal = ctk.CTkScrollbar(painel, orientation='horizontal', command=self.canvas.xview)
-        horizontal.grid(row=2, column=0, sticky='ew')
-        vertical = ctk.CTkScrollbar(painel, orientation='vertical', command=self.canvas.yview)
-        vertical.grid(row=1, column=1, sticky='ns')
-        self.canvas.configure(xscrollcommand=horizontal.set, yscrollcommand=vertical.set)
+        horizontal.grid(row=2, column=1, sticky='ew')
+        self.barra_vertical = ctk.CTkScrollbar(painel, orientation='vertical', command=self.canvas.yview)
+        self.barra_vertical.grid(row=1, column=2, sticky='ns')
+        self.canvas.configure(xscrollcommand=horizontal.set, yscrollcommand=self.sincronizar_vertical)
 
     def _montar_inspecao(self):
         painel = ctk.CTkFrame(self, width=260)
@@ -382,14 +385,25 @@ class JanelaSimulador(ctk.CTk):
 
     # Desenho, zoom e rolagem
 
+    def sincronizar_vertical(self, inicio, fim):
+        """Só o tempo rola na horizontal; recursos acompanham o gráfico na vertical."""
+        self.barra_vertical.set(inicio, fim)
+        self.rotulos.yview_moveto(inicio)
+
     def redesenhar(self):
         if self.dados_gantt is None:
             return
         esquerda, topo = max(0, self.canvas.canvasx(0)), max(0, self.canvas.canvasy(0))
         self.canvas.delete('all')
         largura, altura = desenhar_gantt(self.dados_gantt, DesenhoCanvas(self.canvas), self.simulacao.algoritmo, self.escala)
-        self.canvas.configure(scrollregion=(0, 0, largura, altura))
-        self.canvas.xview_moveto(esquerda / largura)
+        _, _, margem = tamanho_gantt(self.dados_gantt, self.escala)
+        self.rotulos.delete('all')
+        desenhar_rotulos(self.dados_gantt, DesenhoCanvas(self.rotulos))
+        self.rotulos.configure(width=margem, scrollregion=(0, 0, margem, altura))
+        # A coluna dos recursos está em outro Canvas; a área rolável começa no tempo zero.
+        inicio = margem-16  # espaço para o rótulo centralizado do tick zero
+        self.canvas.configure(scrollregion=(inicio, 0, largura, altura))
+        self.canvas.xview_moveto(max(0, esquerda-inicio) / (largura-inicio))
         self.canvas.yview_moveto(topo / altura)
 
     def zoom(self, fator):
@@ -401,13 +415,12 @@ class JanelaSimulador(ctk.CTk):
         self.escala = max(.01, min(200, self.escala * fator))
         self.redesenhar()
         largura, _, _ = tamanho_gantt(self.dados_gantt, self.escala)
-        self.canvas.xview_moveto(max(0, margem+centro_tick*self.escala-largura_tela/2) / largura)
+        self.canvas.xview_moveto(max(0, 16+centro_tick*self.escala-largura_tela/2) / (largura-margem+16))
 
     def ajustar(self):
         if self.dados_gantt is not None:
             fim = max(1, self.dados_gantt[0])
-            _, _, margem = tamanho_gantt(self.dados_gantt)
-            self.escala = max(1e-9, (self.canvas.winfo_width()-margem-30) / fim)
+            self.escala = max(1e-9, (self.canvas.winfo_width()-46) / fim)
             self.canvas.xview_moveto(0)
             self.redesenhar()
 

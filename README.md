@@ -2,6 +2,9 @@
 
 Simulação preemptiva RM/EDF com múltiplas CPUs, histórico por tick e interface
 CustomTkinter. O Canvas do Tkinter mostra o Gantt; drawsvg gera o arquivo vetorial.
+O gráfico reúne a execução das CPUs no topo e as tarefas em faixas compactas:
+contorno indica pronta, pontilhado indica suspensão e hachura indica CPU ociosa.
+Os rótulos ficam fixos durante a rolagem horizontal; preempções têm símbolo próprio.
 
 ## Executar no Windows
 

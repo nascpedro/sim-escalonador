@@ -38,7 +38,9 @@ class TesteExportador(unittest.TestCase):
                 self.assertTrue(raiz.findall('.//s:rect', NS))
                 self.assertIn(f'0 a {fim} ticks', ''.join(raiz.itertext()))
                 cores = {r.get('fill') for r in raiz.findall('.//s:rect', NS)}
-                self.assertTrue({'#FF0000', '#00FF00', '#d9dde2'} <= cores)
+                self.assertTrue({'#FF0000', '#00FF00'} <= cores)
+                # Ociosidade agora usa uma hachura vetorial, em vez de cinza sólido.
+                self.assertTrue(any(cor and cor.startswith('url(') for cor in cores))
                 self.assertFalse(raiz.findall('.//s:image', NS))
                 self.assertTrue(raiz.findall('.//s:path', NS))
                 if fim == 91:

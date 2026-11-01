@@ -1,4 +1,6 @@
 # Gera uma pasta Windows autossuficiente e um ZIP. Não instala dependências.
+param([switch]$SemZip)
+
 $ErrorActionPreference = 'Stop'
 $Raiz = Split-Path $PSScriptRoot -Parent
 $PythonProjeto = Join-Path $Raiz '.venv-ctk\Scripts\python.exe'
@@ -11,6 +13,7 @@ try {
     $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
     & $PythonProjeto -m PyInstaller --noconfirm --clean --onedir --windowed --name SimuladorSO `
         --collect-data customtkinter `
+        --add-data "$(Join-Path $Raiz 'assets');assets" `
         --copy-metadata customtkinter --copy-metadata drawsvg `
         --copy-metadata darkdetect --copy-metadata packaging `
         --distpath $Dist --workpath (Join-Path $Build 'pyinstaller') --specpath $Build `
@@ -46,6 +49,8 @@ Sem arquivo de entrada, a janela solicita o destino do SVG ao concluir.
 $Relatorio = & $PythonProjeto -B (Join-Path $PSScriptRoot 'verificar_distribuicao.py') $Pacote
 if ($LASTEXITCODE -ne 0) { throw 'O executavel falhou na verificacao; ZIP nao atualizado.' }
 $Relatorio | Set-Content -LiteralPath (Join-Path $Build 'verificacao-distribuicao.json') -Encoding UTF8
-Compress-Archive -LiteralPath $Pacote -DestinationPath (Join-Path $Dist 'SimuladorSO-windows-x64.zip') -Force
 Write-Output "Distribuicao: $Pacote"
-Write-Output "ZIP: $(Join-Path $Dist 'SimuladorSO-windows-x64.zip')"
+if (-not $SemZip) {
+    Compress-Archive -LiteralPath $Pacote -DestinationPath (Join-Path $Dist 'SimuladorSO-windows-x64.zip') -Force
+    Write-Output "ZIP: $(Join-Path $Dist 'SimuladorSO-windows-x64.zip')"
+}

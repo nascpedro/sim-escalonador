@@ -11,17 +11,23 @@ import drawsvg as draw
 from linha_tempo import coletar_intervalos
 
 
-# Nome, cor e faixa abaixo da barra. Cada evento possui uma forma distinta.
+# Nome, cor e deslocamento a partir do topo da barra. Os eventos ficam junto
+# da execução; conclusão e fim de quantum compartilham a base, pois são exclusivos.
 EVENTOS = {
-    'chegada': ('Chegada', '#215e99', 31),
-    'ativacao': ('Ativação', '#42692e', 42),
-    'conclusao': ('Conclusão', '#176d58', 53),
-    'perda_prazo': ('Perda de prazo', '#a62626', 64),
-    'fim_quantum': ('Fim de quantum', '#855215', 75),
-    'sorteio': ('Sorteio', '#6e3f97', 86),
-    'inclusao': ('Inclusão manual', '#2563eb', 97),
-    'remocao': ('Remoção manual', '#dc2626', 108),
+    'chegada': ('Chegada', '#215e99', -10),
+    'ativacao': ('Ativação', '#42692e', -1),
+    'conclusao': ('Conclusão', '#176d58', 29),
+    'perda_prazo': ('Perda de prazo', '#a62626', 13),
+    'fim_quantum': ('Fim de quantum', '#855215', 29),
+    'sorteio': ('Sorteio', '#6e3f97', 6),
+    'preempcao': ('Preempção', '#c026d3', 21),
+    'inclusao': ('Inclusão manual', '#2563eb', 13),
+    'remocao': ('Remoção manual', '#dc2626', 6),
 }
+
+ALTURA_BARRA = 20
+PASSO_CPU = 30
+PASSO_TAREFA = 44
 
 
 class DesenhoCanvas:
@@ -30,8 +36,13 @@ class DesenhoCanvas:
         self.canvas = canvas
 
     def retangulo(self, x, y, largura, altura, cor, hachura=False):
+        textura = ''
+        if hachura == 'ociosa':
+            textura = '@' + (Path(__file__).parent / 'assets/ociosa.xbm').as_posix()
+        elif hachura:
+            textura = 'gray50'
         self.canvas.create_rectangle(x, y, x+largura, y+altura,
-            fill=cor, outline='#526171', stipple='gray50' if hachura else '')
+            fill=cor, outline='#526171', stipple=textura)
 
     def linha(self, x1, y1, x2, y2, cor):
         self.canvas.create_line(x1, y1, x2, y2, fill=cor)
@@ -52,10 +63,19 @@ class DesenhoSVG:
         self.hachura = draw.Pattern(6, 6, patternUnits='userSpaceOnUse')
         self.hachura.append(draw.Rectangle(0, 0, 6, 6, fill='#151515'))
         self.hachura.append(draw.Line(0, 6, 6, 0, stroke='#bcbcbc', stroke_width=1))
+        self.ociosa = draw.Pattern(8, 8, patternUnits='userSpaceOnUse')
+        self.ociosa.append(draw.Rectangle(0, 0, 8, 8, fill='white'))
+        self.ociosa.append(draw.Line(0, 0, 8, 8, stroke='#94a3b8', stroke_width=1))
 
     def retangulo(self, x, y, largura, altura, cor, hachura=False):
+        if hachura == 'ociosa':
+            preenchimento = self.ociosa
+        elif hachura:
+            preenchimento = self.hachura
+        else:
+            preenchimento = cor or 'none'
         self.imagem.append(draw.Rectangle(x, y, largura, altura,
-            fill=self.hachura if hachura else cor, stroke='#526171', stroke_width=.5))
+            fill=preenchimento, stroke='#526171', stroke_width=.5))
 
     def linha(self, x1, y1, x2, y2, cor):
         self.imagem.append(draw.Line(x1, y1, x2, y2, stroke=cor, stroke_width=1))
@@ -84,12 +104,38 @@ def preparar_gantt(simulacao):
     return fim, ids, cpus, eventos, coletar_intervalos(estados, eventos, fim)
 
 
+def geometria_gantt(dados):
+    """CPUs no topo; tarefas compactas, em ordem decrescente, perto do eixo X."""
+    _, ids, cpus, _, _ = dados
+    linhas_cpu = {cpu: 50 + i * PASSO_CPU for i, cpu in enumerate(cpus)}
+    topo_tarefas = 50 + len(cpus) * PASSO_CPU + 26
+    linhas = {id_: topo_tarefas + i * PASSO_TAREFA for i, id_ in enumerate(ids)}
+    eixo = topo_tarefas + len(ids) * PASSO_TAREFA + 8
+    return linhas_cpu, linhas, eixo
+
+
 def tamanho_gantt(dados, escala=24):
-    fim, ids, cpus, _, _ = dados
-    margem = max(140, max((len(str(id_)) * 9 + 75 for id_ in ids), default=140))
-    largura = max(900, margem + max(1, fim) * escala + 30)
-    altura = 80 + len(ids) * 125 + len(cpus) * 36 + 150
-    return largura, altura, margem
+    fim, ids, _, _, _ = dados
+    margem = max(120, max((len(str(id_)) * 9 + 75 for id_ in ids), default=120))
+    largura = max(margem + 810, margem + max(1, fim) * escala + 30)
+    _, _, eixo = geometria_gantt(dados)
+    return largura, eixo + 190, margem
+
+
+def cor_texto(cor):
+    """Escolhe texto claro em fundos escuros e escuro em fundos claros."""
+    r, g, b = (int(cor.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    return '#000000' if .299*r + .587*g + .114*b > 140 else '#ffffff'
+
+
+def desenhar_rotulos(dados, destino):
+    """A GUI usa outro Canvas para manter esta coluna fixa durante a rolagem."""
+    linhas_cpu, linhas, _ = geometria_gantt(dados)
+    destino.texto(12, 20, 'Recurso')
+    for cpu, y in linhas_cpu.items():
+        destino.texto(12, y+10, f'CPU {cpu}')
+    for id_, y in linhas.items():
+        destino.texto(12, y+10, f'Tarefa {id_}')
 
 
 def marcador(destino, tipo, x, y, cor):
@@ -107,6 +153,10 @@ def marcador(destino, tipo, x, y, cor):
     elif tipo == 'remocao':
         destino.linha(x-4, y, x+4, y, cor)
         return
+    elif tipo == 'preempcao':
+        destino.poligono([(x-4, y-4), (x-2, y-4), (x-2, y+4), (x-4, y+4)], cor)
+        destino.poligono([(x+2, y-4), (x+4, y-4), (x+4, y+4), (x+2, y+4)], cor)
+        return
     elif tipo == 'perda_prazo':
         destino.linha(x-4, y-4, x+4, y+4, cor)
         destino.linha(x-4, y+4, x+4, y-4, cor)
@@ -119,49 +169,56 @@ def marcador(destino, tipo, x, y, cor):
 
 
 def desenhar_gantt(dados, destino, algoritmo, escala=24):
-    """Ticks viram X; tarefas viram linhas; ambos os destinos recebem o mesmo desenho."""
+    """O mesmo desenho para tela e SVG; rótulos de CPU não alteram sua numeração."""
     fim, ids, cpus, eventos, grupos = dados
     largura, altura, margem = tamanho_gantt(dados, escala)
-    linhas = {id_: 70 + i * 125 for i, id_ in enumerate(ids)}
-    linhas_cpu = {cpu: 70 + len(ids)*125 + i*36 for i, cpu in enumerate(cpus)}
-    destino.texto(15, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
-    # Marcas legíveis, sem criar um texto por tick em simulações extensas.
-    minimo = max(1, 65 / escala, max(1, fim) / 200)
+    linhas_cpu, linhas, eixo_x = geometria_gantt(dados)
+    destino.texto(margem, 20, f'Gantt · {algoritmo} · 0 a {fim} ticks')
+    minimo = max(1, 50 / escala, max(1, fim) / 200)
     potencia = 10 ** math.floor(math.log10(minimo))
     passo = next(m * potencia for m in (1, 2, 5, 10) if m * potencia >= minimo)
-    eixo_x = altura - 150
     destino.linha(margem, eixo_x, margem + max(1, fim)*escala, eixo_x, '#526171')
     for tick in range(0, fim + 1, int(passo)):
         x = margem + tick * escala
-        destino.linha(x, 55, x, altura-150, '#e2e8f0')
+        destino.linha(x, 40, x, eixo_x, '#e2e8f0')
         destino.texto(x, eixo_x+17, tick, centro=True)
-    for id_, y in linhas.items():
-        destino.texto(12, y+10, f'Tarefa {id_}')
-    for cpu, y in linhas_cpu.items():
-        destino.texto(12, y+10, f'CPU {cpu} ociosa')
+    desenhar_rotulos(dados, destino)
+
     for (tipo, id_, cpu, cor), trechos in grupos.items():
         y = linhas_cpu[cpu] if tipo == 'cpu_desligada' else linhas[id_]
+        textura = 'ociosa' if tipo == 'cpu_desligada' else tipo == 'suspensa'
         for a, b in trechos:
             x, comprimento = margem + a*escala, (b-a)*escala
-            destino.retangulo(x, y, comprimento, 22, cor, tipo == 'suspensa')
-            if tipo == 'execucao' and comprimento >= 18:
-                destino.texto(x+comprimento/2, y+11, cpu, cor='#000000', centro=True)
+            destino.retangulo(x, y, comprimento, ALTURA_BARRA,
+                              '#94a3b8' if tipo == 'cpu_desligada' else cor, textura)
+            if tipo == 'execucao':
+                # A faixa da tarefa mostra a CPU; a faixa da CPU mostra a tarefa.
+                if comprimento >= 18:
+                    destino.texto(x+comprimento/2, y+10, cpu, cor=cor_texto(cor), centro=True)
+                destino.retangulo(x, linhas_cpu[cpu], comprimento, ALTURA_BARRA, cor)
+                rotulo = f'T{id_}'
+                if comprimento >= len(rotulo)*9+8:
+                    destino.texto(x+comprimento/2, linhas_cpu[cpu]+10, rotulo,
+                                  cor=cor_texto(cor), centro=True)
     for evento in eventos:
         tipo = evento['tipo']
         _, cor, deslocamento = EVENTOS[tipo]
         escolhidas = evento.get('selecionadas', []) if tipo == 'sorteio' else [evento['id_tarefa']]
         for id_ in escolhidas:
             marcador(destino, tipo, margem+evento['tick']*escala, linhas[id_]+deslocamento, cor)
-    # Legenda compacta, com as mesmas formas e cores usadas nos eventos.
-    base = altura-105
-    destino.retangulo(15, base-9, 24, 18, '#7faacb')
-    destino.texto(48, base, 'Execução: número no bloco = CPU')
-    destino.retangulo(390, base-9, 24, 18, '#151515', True)
-    destino.texto(423, base, 'Suspensa · pronta/aguardando: sem cor')
+
+    base = eixo_x+48
+    destino.texto(margem, base, 'Blocos: CPU mostra tarefa; tarefa mostra o número da CPU.')
+    estilos = [('Execução', '#7faacb', False), ('Pronta (só contorno)', '', False),
+               ('Suspensa (pontilhado)', '#151515', True), ('CPU ociosa (hachura)', '#94a3b8', 'ociosa')]
+    for i, (nome, cor, textura) in enumerate(estilos):
+        x, y = margem+12+(i % 3)*260, base+26+(i//3)*24
+        destino.retangulo(x-12, y-8, 23, 16, cor, textura)
+        destino.texto(x+21, y, nome)
     for i, (tipo, (nome, cor, _)) in enumerate(EVENTOS.items()):
-        x, y = 22 + (i % 3)*280, base+35+(i//3)*28
+        x, y = margem+12+(i % 3)*260, base+78+(i//3)*24
         marcador(destino, tipo, x, y, cor)
-        destino.texto(x+14, y, nome)
+        destino.texto(x+21, y, nome)
     return largura, altura
 
 

@@ -12,6 +12,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/empacotar.ps1
 
 O script gera `dist/SimuladorSO/` e `dist/SimuladorSO-windows-x64.zip`.
 Extraia/copie a pasta inteira antes de executar `SimuladorSO.exe`.
+Para preparar somente a pasta executável, use `scripts/empacotar.ps1 -SemZip`.
+No Moodle, envie os arquivos avulsos conforme as regras; não envie o ZIP.
 Python, Tcl/Tk, CustomTkinter, fontes/temas e drawsvg acompanham o pacote.
 Não há dependência de Qt/Matplotlib nem arquivo de formulário .ui.
 
@@ -45,7 +47,7 @@ Uso da exportação sem abrir janela:
 
 ## Limites da validação
 
-Resultado local em 31/10/2026: **95 testes aprovados, sem testes ignorados**.
+Resultado local em 31/10/2026: **99 testes aprovados, sem testes ignorados**.
 O pacote passou em três exportações (SVG vetorial completo), uma entrada
 inválida e duas inicializações/execuções/fechamentos da interface empacotada. Cada
 execução da janela chegou ao tick 185 com 30 conclusões e gerou SVG automático.

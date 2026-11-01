@@ -293,6 +293,12 @@ class Simulacao:
         # Consultar a política antes de apagar quem estava executando (desempate).
         ordenadas = escalonar(candidatas, estado.algoritmo, sorteios)
         ids = [t.id for t in ordenadas[:len(estado.cpus)]]
+        # Perder a CPU por decisão do escalonador é preempção. Migração e
+        # conclusão não entram aqui: o evento descreve a interrupção da tarefa.
+        for tarefa in candidatas:
+            if tarefa.estado_tarefa == EstadoTarefa.EXECUTANDO and tarefa.id not in ids:
+                estado.eventos.append(dict(tipo='preempcao', tick=estado.tick,
+                    id_tarefa=tarefa.id, id_cpu=tarefa.id_cpu_atual))
         for indice, ordem in enumerate(sorteios):
             estado.eventos.insert(indice, dict(
                 tipo='sorteio', tick=estado.tick, ordem=ordem,

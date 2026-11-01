@@ -65,7 +65,8 @@ class TestGanttSVG(unittest.TestCase):
 
     def test_sorteio_na_trilha_das_selecionadas_e_ids_decrescentes(self):
         from unittest.mock import patch
-        from gantt import DesenhoSVG, desenhar_gantt, preparar_gantt, tamanho_gantt
+        from gantt import (EVENTOS, DesenhoSVG, desenhar_gantt, geometria_gantt,
+                           preparar_gantt, tamanho_gantt)
         sim = Simulacao(EstadoSimulacao(0, [TCB(i, f'{i*1000:06X}', 0, 3, 10, 10)
             for i in (1, 2, 3)], [Cpu(0), Cpu(1)], 0), 'RM')
         with patch('scheduler.random.shuffle', side_effect=lambda g: g.reverse()):
@@ -83,4 +84,49 @@ class TestGanttSVG(unittest.TestCase):
         desenho.poligono = registrar
         desenhar_gantt(dados, desenho, 'RM')
         # Tarefas 3 e 2 recebem CPUs; tarefa 1 não recebe o diamante.
-        self.assertEqual(sorted(y for y in sorteios if y < 400), [156, 281])
+        _, linhas, eixo = geometria_gantt(dados)
+        deslocamento = EVENTOS['sorteio'][2]
+        self.assertEqual(sorted(y for y in sorteios if y < eixo),
+                         [linhas[3]+deslocamento, linhas[2]+deslocamento])
+
+    def test_pronta_desde_a_chegada_e_durante_preempcao(self):
+        from gantt import preparar_gantt
+        sim = Simulacao(EstadoSimulacao(0,
+            [TCB(1, '#FF0000', 0, 2, 4, 4), TCB(2, '#000080', 0, 3, 10, 10)],
+            [Cpu(0)], 0), 'RM')
+        sim.avancar(7)
+        dados = preparar_gantt(sim)
+        self.assertEqual(dados[4][('pronta', 2, None, '')], [[0, 2], [4, 6]])
+        preempcoes = [e for e in dados[3] if e['tipo'] == 'preempcao']
+        self.assertEqual(preempcoes, [dict(tipo='preempcao', tick=4, id_tarefa=2, id_cpu=0)])
+        antes = pickle.dumps(sim.historico)
+        sim.retroceder(3)
+        self.assertFalse(any(e['tipo'] == 'preempcao' for e in preparar_gantt(sim)[3]))
+        sim.avancar(3)
+        self.assertEqual(pickle.dumps(sim.historico), antes)
+
+    def test_cpu_no_topo_texto_contrastante_e_contorno_vetorial(self):
+        from gantt import cor_texto, exportar_svg
+        sim = Simulacao(EstadoSimulacao(0,
+            [TCB(1, '#000080', 0, 3, 10, 10), TCB(2, '#FFFFFF', 0, 3, 20, 20)],
+            [Cpu(0)], 0), 'RM')
+        sim.avancar(3)
+        with tempfile.TemporaryDirectory() as pasta:
+            raiz = ET.parse(exportar_svg(sim, Path(pasta) / 'novo.svg')).getroot()
+        textos = raiz.findall('.//{http://www.w3.org/2000/svg}text')
+        cpu = next(t for t in textos if ''.join(t.itertext()) == 'CPU 0')
+        tarefa = next(t for t in textos if ''.join(t.itertext()) == 'Tarefa 1')
+        self.assertLess(float(cpu.attrib['y']), float(tarefa.attrib['y']))
+        self.assertIn('T1', ''.join(raiz.itertext()))
+        self.assertTrue(any(r.attrib.get('fill') == 'none'
+                            for r in raiz.findall('.//{http://www.w3.org/2000/svg}rect')))
+        self.assertEqual(cor_texto('#000080'), '#ffffff')
+        self.assertEqual(cor_texto('#FFFFFF'), '#000000')
+
+    def test_migracao_e_fim_quantum_nao_sao_preempcao(self):
+        sim = Simulacao(EstadoSimulacao(0,
+            [TCB(1, '#FF0000', 1, 1, 5, 5), TCB(2, '#000080', 0, 4, 10, 10)],
+            [Cpu(0), Cpu(1)], 1), 'RM')
+        sim.avancar(4)
+        self.assertTrue(any(e['tipo'] == 'fim_quantum' for s in sim.historico for e in s.eventos))
+        self.assertFalse(any(e['tipo'] == 'preempcao' for s in sim.historico for e in s.eventos))

@@ -139,6 +139,19 @@ distinto e eventos têm formas próprias. Sorteio marca somente selecionadas. ID
 numéricos maiores ficam acima dos menores. Na tela, zoom recalcula coordenadas
 horizontais e mantém fonte fixa; detalhes estreitos precisam de aproximação.
 
+O layout foi inspirado na comparação com o protótipo C# da dupla; o motor e o
+desenho compartilhado Canvas/SVG continuam os da implementação Python.
+
+O Gantt usa faixas de CPU no topo e linhas de tarefas de 44 pixels. A faixa da
+CPU identifica a tarefa; a faixa da tarefa identifica a CPU, com texto branco ou
+preto conforme o fundo. Prontas recebem só contorno; a primeira espera após a
+ativação também é desenhada. Suspensão usa pontilhado; ociosidade usa hachura.
+Os eventos ficam junto aos blocos, com legenda compartilhada pelo Canvas e SVG.
+Preempção é a perda de CPU por decisão do escalonador; migração e conclusão não
+geram esse evento. O marcador usa duas barras magenta. Os rótulos ficam num
+Canvas separado, fixo na horizontal e sincronizado com a rolagem vertical.
+assets/ociosa.xbm fornece a textura nativa do Canvas; o SVG usa padrão vetorial.
+
 Ao concluir pela janela, salva SVG ao lado da configuração. Um nome existente
 recebe sufixo numérico. Sem arquivo de entrada, solicita o destino ao concluir;
 cancelar mantém o resultado disponível para exportação posterior. Falhas de escrita preservam resultados e permitem escolher

@@ -16,6 +16,7 @@ def main():
     pacote = Path(sys.argv[1]).resolve()
     executavel = pacote / 'SimuladorSO.exe'
     assert (pacote / '_internal/customtkinter/assets/themes/blue.json').is_file()
+    assert (pacote / '_internal/assets/ociosa.xbm').is_file()
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(('PYTHON', 'QT_', 'PYSIDE', 'MPL'))}
     env['PATH'] = os.pathsep.join([os.environ['SystemRoot'],

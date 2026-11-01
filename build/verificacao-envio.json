@@ -1,0 +1,29 @@
+[
+  {
+    "arquivo": "configuracao.txt",
+    "tick": 185,
+    "avisos": []
+  },
+  {
+    "arquivo": "edf-prazos.txt",
+    "tick": 475,
+    "avisos": []
+  },
+  {
+    "arquivo": "exemplo_edf.txt",
+    "tick": 94,
+    "avisos": [
+      "Linha 6: tarefa 5 aperiódica ignorada no Projeto A."
+    ]
+  },
+  {
+    "arquivo": "rm-perda-prazo.txt",
+    "tick": 475,
+    "avisos": []
+  },
+  {
+    "arquivo": "sobreposicao.txt",
+    "tick": 50,
+    "avisos": []
+  }
+]

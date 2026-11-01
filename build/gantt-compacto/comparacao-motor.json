@@ -1,0 +1,5 @@
+{
+  "cenarios": 100,
+  "base": "edc8567",
+  "estados_e_eventos_preservados_exceto_novo_evento_preempcao": true
+}

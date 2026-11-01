@@ -1,0 +1,156 @@
+**
+(main.tex
+LaTeX2e <2021-11-15> patch level 1
+L3 programming layer <2022-02-24> (article.cls
+Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
+(size10.clo
+File: size10.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count181
+\c@section=\count182
+\c@subsection=\count183
+\c@subsubsection=\count184
+\c@paragraph=\count185
+\c@subparagraph=\count186
+\c@figure=\count187
+\c@table=\count188
+\abovecaptionskip=\skip47
+\belowcaptionskip=\skip48
+\bibindent=\dimen138
+) (inputenc.sty
+Package: inputenc 2021/02/14 v1.3d Input encoding file
+\inpenc@prehook=\toks16
+\inpenc@posthook=\toks17
+
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
+) (fontenc.sty
+Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 11
+2.
+ (t1lmr.fd
+File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)) (babel.sty
+Package: babel 2022/02/26 3.73 The Babel package
+\babel@savecnt=\count189
+\U@D=\dimen139
+\l@unhyphenated=\language87
+ (xebabel.def (txtbabel.def))
+\bbl@readstream=\read2
+\bbl@dirlevel=\count190
+ (brazil.ldf
+Language: portuges 2021/07/09 v1.2t Portuguese support from the babel system
+Package babel Info: Hyphen rules for 'brazil' set to \l@portuguese
+(babel)             (\language70). Reported on input line 111.
+Package babel Info: Making " an active character on input line 143.
+)) (graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+ (keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks18
+) (graphics.sty
+Package: graphics 2021/03/04 v1.4d Standard LaTeX Graphics (DPC,SPQR)
+ (trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+) (graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: xetex.def on input line 107.
+ (xetex.def
+File: xetex.def 2021/03/18 v5.0k Graphics/color driver for xetex
+))
+\Gin@req@height=\dimen140
+\Gin@req@width=\dimen141
+) (l3backend-xetex.def
+File: l3backend-xetex.def 2022-02-07 L3 backend support: XeTeX
+\c__kernel_sys_dvipdfmx_version_int=\count191
+\l__color_backend_stack_int=\count192
+\g__color_backend_stack_int=\count193
+\g__graphics_track_int=\count194
+\l__pdf_internal_box=\box50
+\g__pdf_backend_object_int=\count195
+\g__pdf_backend_annotation_int=\count196
+\g__pdf_backend_link_int=\count197
+) (main.aux)
+\openout1 = `main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
+4.
+ (ts1cmr.fd
+File: ts1cmr.fd 2019/12/16 v2.5j Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 16.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 16.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 16.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 3
+3.
+ (t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+File: imagens/principal.png Graphic file (type bmp)
+<imagens/principal.png>
+File: imagens/inicial.png Graphic file (type bmp)
+<imagens/inicial.png>
+ [1
+
+]
+File: imagens/controles.png Graphic file (type bmp)
+<imagens/controles.png>
+ [2]
+File: imagens/gantt.png Graphic file (type bmp)
+<imagens/gantt.png>
+ [3]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 130.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 130.
+File: imagens/legenda.png Graphic file (type bmp)
+<imagens/legenda.png>
+
+[4]
+File: imagens/inspecao.png Graphic file (type bmp)
+<imagens/inspecao.png>
+ [5]
+File: imagens/configuracao.png Graphic file (type bmp)
+<imagens/configuracao.png>
+ [6]
+File: imagens/inclusao.png Graphic file (type bmp)
+<imagens/inclusao.png>
+ [7]
+File: imagens/edicao.png Graphic file (type bmp)
+<imagens/edicao.png>
+File: imagens/erro-edicao.png Graphic file (type bmp)
+<imagens/erro-edicao.png>
+ [8]
+File: imagens/erro-configuracao.png Graphic file (type bmp)
+<imagens/erro-configuracao.png>
+ [9] [10]
+File: imagens/abrir.png Graphic file (type bmp)
+<imagens/abrir.png>
+File: imagens/exportar.png Graphic file (type bmp)
+<imagens/exportar.png>
+ [11]
+File: imagens/resultado.png Graphic file (type bmp)
+<imagens/resultado.png>
+ [12] [13] (main.aux) )
+Output written on main.xdv (13 pages, 29344 bytes).

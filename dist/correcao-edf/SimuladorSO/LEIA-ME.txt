@@ -1,0 +1,18 @@
+﻿Simulador de escalonamento - Projeto A
+
+Extraia a pasta inteira antes de executar SimuladorSO.exe.
+Abra exemplos/configuracao.txt pelo botao Abrir arquivo, ou use Nova simulacao.
+Adicionar/Editar/Remover alteram tarefas no instante selecionado.
+Sugestoes: RM, quantum 0, 2 CPUs; tarefa de duracao 1, periodo e prazo 10.
+Os formularios permitem substituir as sugestoes antes de aplicar.
+Avance, retroceda e selecione uma tarefa para inspecionar ou editar.
+O botao Executar ate o fim conclui dez ocorrencias de cada tarefa.
+O SVG final e salvo ao lado da configuracao, sem sobrescrever arquivos existentes.
+Use Exportar SVG para escolher outro destino ou exportar um estado intermediario.
+
+Linha de comando, sem janela:
+SimuladorSO.exe --exportar exemplos/configuracao.txt resultado.svg
+
+Distribuicao Windows x64. Nao e necessario instalar Python ou bibliotecas.
+O pacote ainda precisa de homologacao em uma maquina Windows limpa.
+Sem arquivo de entrada, a janela solicita o destino do SVG ao concluir.

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1370" height="427" viewBox="0 0 1370 427">
+<defs>
+<pattern width="6" height="6" patternUnits="userSpaceOnUse" id="d0">
+<rect x="0" y="0" width="6" height="6" fill="#151515" />
+<path d="M0,6 L6,0" stroke="#bcbcbc" stroke-width="1" />
+</pattern>
+</defs>
+<rect x="0" y="0" width="1370" height="427" fill="white" />
+<text x="15" y="20" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Gantt · RM · 0 a 50 ticks</text>
+<path d="M140,277 L1340,277" stroke="#526171" stroke-width="1" />
+<path d="M140,55 L140,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="140" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<path d="M260,55 L260,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="260" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">5</text>
+<path d="M380,55 L380,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="380" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">10</text>
+<path d="M500,55 L500,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="500" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">15</text>
+<path d="M620,55 L620,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="620" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">20</text>
+<path d="M740,55 L740,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="740" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">25</text>
+<path d="M860,55 L860,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="860" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">30</text>
+<path d="M980,55 L980,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="980" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">35</text>
+<path d="M1100,55 L1100,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="1100" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">40</text>
+<path d="M1220,55 L1220,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="1220" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">45</text>
+<path d="M1340,55 L1340,277" stroke="#e2e8f0" stroke-width="1" />
+<text x="1340" y="294" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">50</text>
+<text x="12" y="80" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Tarefa 1</text>
+<text x="12" y="205" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">CPU 0 ociosa</text>
+<text x="12" y="241" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">CPU 1 ociosa</text>
+<rect x="140" y="231" width="1200" height="22" fill="#d9dde2" stroke="#526171" stroke-width="0.5" />
+<rect x="140" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="164.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="188" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="200.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="212" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="224.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="236" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="248.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="260" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="272.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="284" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="296.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="308" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="332.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="356" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="368.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="380" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="404.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="428" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="440.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="452" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="464.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="476" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="488.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="500" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="512.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="524" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="536.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="548" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="560.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="572" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="584.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="596" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="608.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="620" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="632.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="644" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="656.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="668" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="692.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="716" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="728.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="740" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="764.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="788" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="800.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="812" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="824.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="836" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="848.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="860" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="872.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="884" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="896.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="908" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="932.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="956" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="968.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="980" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1004.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1028" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1052.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1076" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1088.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1100" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1124.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1148" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1172.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1196" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1208.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1220" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1244.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1268" y="70" width="48" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1292.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1316" y="70" width="24" height="22" fill="#C084FC" stroke="#526171" stroke-width="0.5" />
+<text x="1328.0" y="81" font-size="13" fill="#000000" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<path d="M136,97 L144,97 L140,105 Z" fill="#215e99" />
+<path d="M136,116 L144,116 L140,108 Z" fill="#42692e" />
+<path d="M184,141 L192,141 L192,149 L184,149 Z" fill="#855215" />
+<path d="M208,116 L216,116 L212,108 Z" fill="#42692e" />
+<path d="M232,141 L240,141 L240,149 L232,149 Z" fill="#855215" />
+<path d="M232,130 L240,138" stroke="#a62626" stroke-width="1" />
+<path d="M232,138 L240,130" stroke="#a62626" stroke-width="1" />
+<path d="M264.0,123.0 L262.8284271247462,125.82842712474618 L260.0,127.0 L257.1715728752538,125.82842712474618 L256.0,123.0 L257.1715728752538,120.17157287525382 L260.0,119.0 L262.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M280,116 L288,116 L284,108 Z" fill="#42692e" />
+<path d="M304,141 L312,141 L312,149 L304,149 Z" fill="#855215" />
+<path d="M304,130 L312,138" stroke="#a62626" stroke-width="1" />
+<path d="M304,138 L312,130" stroke="#a62626" stroke-width="1" />
+<path d="M352,141 L360,141 L360,149 L352,149 Z" fill="#855215" />
+<path d="M352,116 L360,116 L356,108 Z" fill="#42692e" />
+<path d="M384.0,123.0 L382.8284271247462,125.82842712474618 L380.0,127.0 L377.1715728752538,125.82842712474618 L376.0,123.0 L377.1715728752538,120.17157287525382 L380.0,119.0 L382.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M376,130 L384,138" stroke="#a62626" stroke-width="1" />
+<path d="M376,138 L384,130" stroke="#a62626" stroke-width="1" />
+<path d="M424,141 L432,141 L432,149 L424,149 Z" fill="#855215" />
+<path d="M424,116 L432,116 L428,108 Z" fill="#42692e" />
+<path d="M448,130 L456,138" stroke="#a62626" stroke-width="1" />
+<path d="M448,138 L456,130" stroke="#a62626" stroke-width="1" />
+<path d="M472,141 L480,141 L480,149 L472,149 Z" fill="#855215" />
+<path d="M504.0,123.0 L502.8284271247462,125.82842712474618 L500.0,127.0 L497.1715728752538,125.82842712474618 L496.0,123.0 L497.1715728752538,120.17157287525382 L500.0,119.0 L502.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M496,116 L504,116 L500,108 Z" fill="#42692e" />
+<path d="M520,130 L528,138" stroke="#a62626" stroke-width="1" />
+<path d="M520,138 L528,130" stroke="#a62626" stroke-width="1" />
+<path d="M544,141 L552,141 L552,149 L544,149 Z" fill="#855215" />
+<path d="M568,116 L576,116 L572,108 Z" fill="#42692e" />
+<path d="M592,141 L600,141 L600,149 L592,149 Z" fill="#855215" />
+<path d="M592,130 L600,138" stroke="#a62626" stroke-width="1" />
+<path d="M592,138 L600,130" stroke="#a62626" stroke-width="1" />
+<path d="M624.0,123.0 L622.8284271247462,125.82842712474618 L620.0,127.0 L617.1715728752538,125.82842712474618 L616.0,123.0 L617.1715728752538,120.17157287525382 L620.0,119.0 L622.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M640,116 L648,116 L644,108 Z" fill="#42692e" />
+<path d="M664,141 L672,141 L672,149 L664,149 Z" fill="#855215" />
+<path d="M664,130 L672,138" stroke="#a62626" stroke-width="1" />
+<path d="M664,138 L672,130" stroke="#a62626" stroke-width="1" />
+<path d="M712,141 L720,141 L720,149 L712,149 Z" fill="#855215" />
+<path d="M712,116 L720,116 L716,108 Z" fill="#42692e" />
+<path d="M744.0,123.0 L742.8284271247462,125.82842712474618 L740.0,127.0 L737.1715728752538,125.82842712474618 L736.0,123.0 L737.1715728752538,120.17157287525382 L740.0,119.0 L742.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M736,130 L744,138" stroke="#a62626" stroke-width="1" />
+<path d="M736,138 L744,130" stroke="#a62626" stroke-width="1" />
+<path d="M784,141 L792,141 L792,149 L784,149 Z" fill="#855215" />
+<path d="M784,116 L792,116 L788,108 Z" fill="#42692e" />
+<path d="M808,130 L816,138" stroke="#a62626" stroke-width="1" />
+<path d="M808,138 L816,130" stroke="#a62626" stroke-width="1" />
+<path d="M832,141 L840,141 L840,149 L832,149 Z" fill="#855215" />
+<path d="M864.0,123.0 L862.8284271247462,125.82842712474618 L860.0,127.0 L857.1715728752538,125.82842712474618 L856.0,123.0 L857.1715728752538,120.17157287525382 L860.0,119.0 L862.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M880,130 L888,138" stroke="#a62626" stroke-width="1" />
+<path d="M880,138 L888,130" stroke="#a62626" stroke-width="1" />
+<path d="M904,141 L912,141 L912,149 L904,149 Z" fill="#855215" />
+<path d="M952,141 L960,141 L960,149 L952,149 Z" fill="#855215" />
+<path d="M984.0,123.0 L982.8284271247462,125.82842712474618 L980.0,127.0 L977.1715728752538,125.82842712474618 L976.0,123.0 L977.1715728752538,120.17157287525382 L980.0,119.0 L982.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M1024,141 L1032,141 L1032,149 L1024,149 Z" fill="#855215" />
+<path d="M1072,141 L1080,141 L1080,149 L1072,149 Z" fill="#855215" />
+<path d="M1104.0,123.0 L1102.8284271247462,125.82842712474618 L1100.0,127.0 L1097.1715728752538,125.82842712474618 L1096.0,123.0 L1097.1715728752538,120.17157287525382 L1100.0,119.0 L1102.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M1144,141 L1152,141 L1152,149 L1144,149 Z" fill="#855215" />
+<path d="M1192,141 L1200,141 L1200,149 L1192,149 Z" fill="#855215" />
+<path d="M1224.0,123.0 L1222.8284271247462,125.82842712474618 L1220.0,127.0 L1217.1715728752538,125.82842712474618 L1216.0,123.0 L1217.1715728752538,120.17157287525382 L1220.0,119.0 L1222.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<path d="M1264,141 L1272,141 L1272,149 L1264,149 Z" fill="#855215" />
+<path d="M1312,141 L1320,141 L1320,149 L1312,149 Z" fill="#855215" />
+<path d="M1344.0,123.0 L1342.8284271247462,125.82842712474618 L1340.0,127.0 L1337.1715728752538,125.82842712474618 L1336.0,123.0 L1337.1715728752538,120.17157287525382 L1340.0,119.0 L1342.8284271247462,120.17157287525382 Z" fill="#176d58" />
+<rect x="15" y="313" width="24" height="18" fill="#7faacb" stroke="#526171" stroke-width="0.5" />
+<text x="48" y="322" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Execução: número no bloco = CPU</text>
+<rect x="390" y="313" width="24" height="18" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<text x="423" y="322" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Suspensa · pronta/aguardando: sem cor</text>
+<path d="M18,353 L26,353 L22,361 Z" fill="#215e99" />
+<text x="36" y="357" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Chegada</text>
+<path d="M298,361 L306,361 L302,353 Z" fill="#42692e" />
+<text x="316" y="357" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Ativação</text>
+<path d="M586.0,357.0 L584.8284271247462,359.8284271247462 L582.0,361.0 L579.1715728752538,359.8284271247462 L578.0,357.0 L579.1715728752538,354.1715728752538 L582.0,353.0 L584.8284271247462,354.1715728752538 Z" fill="#176d58" />
+<text x="596" y="357" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Conclusão</text>
+<path d="M18,381 L26,389" stroke="#a62626" stroke-width="1" />
+<path d="M18,389 L26,381" stroke="#a62626" stroke-width="1" />
+<text x="36" y="385" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Perda de prazo</text>
+<path d="M298,381 L306,381 L306,389 L298,389 Z" fill="#855215" />
+<text x="316" y="385" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Fim de quantum</text>
+<path d="M582,381 L586,385 L582,389 L578,385 Z" fill="#6e3f97" />
+<text x="596" y="385" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Sorteio</text>
+<path d="M18,413 L26,413" stroke="#2563eb" stroke-width="1" />
+<path d="M22,409 L22,417" stroke="#2563eb" stroke-width="1" />
+<text x="36" y="413" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Inclusão manual</text>
+<path d="M298,413 L306,413" stroke="#dc2626" stroke-width="1" />
+<text x="316" y="413" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Remoção manual</text>
+</svg>

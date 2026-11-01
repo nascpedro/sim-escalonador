@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="2406" height="466" viewBox="0 0 2406 466">
+<defs>
+<pattern width="8" height="8" patternUnits="userSpaceOnUse" id="d0">
+<rect x="0" y="0" width="8" height="8" fill="white" />
+<path d="M0,0 L8,8" stroke="#94a3b8" stroke-width="1" />
+</pattern>
+<pattern width="6" height="6" patternUnits="userSpaceOnUse" id="d1">
+<rect x="0" y="0" width="6" height="6" fill="#151515" />
+<path d="M0,6 L6,0" stroke="#bcbcbc" stroke-width="1" />
+</pattern>
+</defs>
+<rect x="0" y="0" width="2406" height="466" fill="white" />
+<text x="120" y="20" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Gantt · EDF · 0 a 94 ticks</text>
+<path d="M120,276 L2376,276" stroke="#526171" stroke-width="1" />
+<path d="M120,40 L120,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="120" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<path d="M240,40 L240,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="240" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">5</text>
+<path d="M360,40 L360,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="360" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">10</text>
+<path d="M480,40 L480,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="480" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">15</text>
+<path d="M600,40 L600,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="600" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">20</text>
+<path d="M720,40 L720,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="720" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">25</text>
+<path d="M840,40 L840,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="840" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">30</text>
+<path d="M960,40 L960,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="960" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">35</text>
+<path d="M1080,40 L1080,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1080" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">40</text>
+<path d="M1200,40 L1200,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1200" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">45</text>
+<path d="M1320,40 L1320,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1320" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">50</text>
+<path d="M1440,40 L1440,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1440" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">55</text>
+<path d="M1560,40 L1560,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1560" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">60</text>
+<path d="M1680,40 L1680,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1680" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">65</text>
+<path d="M1800,40 L1800,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1800" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">70</text>
+<path d="M1920,40 L1920,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="1920" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">75</text>
+<path d="M2040,40 L2040,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="2040" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">80</text>
+<path d="M2160,40 L2160,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="2160" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">85</text>
+<path d="M2280,40 L2280,276" stroke="#e2e8f0" stroke-width="1" />
+<text x="2280" y="293" font-size="13" fill="#243446" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">90</text>
+<text x="12" y="20" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Recurso</text>
+<text x="12" y="60" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">CPU 0</text>
+<text x="12" y="90" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">CPU 1</text>
+<text x="12" y="146" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Tarefa 3</text>
+<text x="12" y="190" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Tarefa 2</text>
+<text x="12" y="234" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Tarefa 1</text>
+<rect x="120" y="224" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="144.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="120" y="80" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="144.0" y="90" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="480" y="224" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="504.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="480" y="80" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="504.0" y="90" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="624" y="224" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="636.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="624" y="80" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<rect x="840" y="224" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="852.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="840" y="80" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<rect x="960" y="224" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="984.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="960" y="80" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="984.0" y="90" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="120" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="144.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="120" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="144.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="240" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="264.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="240" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="264.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="360" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="384.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="360" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="384.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="480" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="504.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="480" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="504.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="600" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="624.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="600" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="624.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="720" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="744.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="720" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="744.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="840" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="864.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="840" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="864.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="960" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="984.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="960" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="984.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="1080" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="1104.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1080" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="1104.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="1200" y="180" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="1224.0" y="190" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1200" y="50" width="48" height="20" fill="#3CB44B" stroke="#526171" stroke-width="0.5" />
+<text x="1224.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T2</text>
+<rect x="168" y="224" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="180.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="168" y="50" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<rect x="288" y="224" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="324.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="288" y="50" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="324.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="456" y="224" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="468.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="456" y="50" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<rect x="648" y="224" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="672.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="648" y="50" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="672.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="792" y="224" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="816.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="792" y="50" width="48" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="816.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="1008" y="224" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1020.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1008" y="50" width="24" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<rect x="1128" y="224" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1164.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1128" y="50" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1164.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="1296" y="224" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1332.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1296" y="50" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1332.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="1464" y="224" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1500.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1464" y="50" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1500.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="1632" y="224" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1668.0" y="234" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1632" y="50" width="72" height="20" fill="#E6194B" stroke="#526171" stroke-width="0.5" />
+<text x="1668.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T1</text>
+<rect x="168" y="136" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="180.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="168" y="80" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<rect x="648" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="672.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="648" y="80" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="672.0" y="90" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="1128" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1152.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="1128" y="80" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1152.0" y="90" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="1632" y="136" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1644.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">1</text>
+<rect x="1632" y="80" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<rect x="192" y="80" width="288" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="528" y="80" width="96" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="696" y="80" width="144" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="864" y="80" width="96" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1008" y="80" width="120" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1176" y="80" width="456" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1656" y="80" width="720" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="192" y="136" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="204.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="192" y="50" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<rect x="408" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="432.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="408" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="432.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="888" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="912.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="888" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="912.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="1368" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1392.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1368" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1392.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="1608" y="136" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1620.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1608" y="50" width="24" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<rect x="1848" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1872.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="1848" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="1872.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="2088" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="2112.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="2088" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="2112.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="2328" y="136" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="2352.0" y="146" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">0</text>
+<rect x="2328" y="50" width="48" height="20" fill="#4363D8" stroke="#526171" stroke-width="0.5" />
+<text x="2352.0" y="60" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="Segoe UI, sans-serif">T3</text>
+<rect x="216" y="50" width="24" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="528" y="50" width="72" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="696" y="50" width="24" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="768" y="50" width="24" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="936" y="50" width="24" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1032" y="50" width="48" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1248" y="50" width="48" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1416" y="50" width="48" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1536" y="50" width="72" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1704" y="50" width="144" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="1896" y="50" width="192" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<rect x="2136" y="50" width="192" height="20" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<path d="M124.0,214.0 L122.82842712474618,216.82842712474618 L120.0,218.0 L117.17157287525382,216.82842712474618 L116.0,214.0 L117.17157287525382,211.17157287525382 L120.0,210.0 L122.82842712474618,211.17157287525382 Z" fill="#215e99" />
+<path d="M116,227 L124,227 L120,219 Z" fill="#42692e" />
+<path d="M124.0,170.0 L122.82842712474618,172.82842712474618 L120.0,174.0 L117.17157287525382,172.82842712474618 L116.0,170.0 L117.17157287525382,167.17157287525382 L120.0,166.0 L122.82842712474618,167.17157287525382 Z" fill="#215e99" />
+<path d="M116,183 L124,183 L120,175 Z" fill="#42692e" />
+<path d="M164,205 L172,205 L168,213 Z" fill="#176d58" />
+<path d="M172.0,126.0 L170.82842712474618,128.82842712474618 L168.0,130.0 L165.17157287525382,128.82842712474618 L164.0,126.0 L165.17157287525382,123.17157287525382 L168.0,122.0 L170.82842712474618,123.17157287525382 Z" fill="#215e99" />
+<path d="M164,139 L172,139 L168,131 Z" fill="#42692e" />
+<path d="M188,249 L196,249 L192,257 Z" fill="#176d58" />
+<path d="M212,161 L220,161 L216,169 Z" fill="#176d58" />
+<path d="M236,183 L244,183 L240,175 Z" fill="#42692e" />
+<path d="M284,205 L292,205 L288,213 Z" fill="#176d58" />
+<path d="M284,227 L292,227 L288,219 Z" fill="#42692e" />
+<path d="M356,249 L364,249 L360,257 Z" fill="#176d58" />
+<path d="M356,183 L364,183 L360,175 Z" fill="#42692e" />
+<path d="M404,205 L412,205 L408,213 Z" fill="#176d58" />
+<path d="M404,139 L412,139 L408,131 Z" fill="#42692e" />
+<path d="M452,161 L460,161 L456,169 Z" fill="#176d58" />
+<path d="M452,227 L460,227 L456,219 Z" fill="#42692e" />
+<path d="M476,183 L484,183 L480,175 Z" fill="#42692e" />
+<path d="M524,249 L532,249 L528,257 Z" fill="#176d58" />
+<path d="M524,205 L532,205 L528,213 Z" fill="#176d58" />
+<path d="M596,183 L604,183 L600,175 Z" fill="#42692e" />
+<path d="M620,227 L628,227 L624,219 Z" fill="#42692e" />
+<path d="M644,205 L652,205 L648,213 Z" fill="#176d58" />
+<path d="M644,139 L652,139 L648,131 Z" fill="#42692e" />
+<path d="M692,249 L700,249 L696,257 Z" fill="#176d58" />
+<path d="M692,161 L700,161 L696,169 Z" fill="#176d58" />
+<path d="M716,183 L724,183 L720,175 Z" fill="#42692e" />
+<path d="M764,205 L772,205 L768,213 Z" fill="#176d58" />
+<path d="M788,227 L796,227 L792,219 Z" fill="#42692e" />
+<path d="M836,183 L844,183 L840,175 Z" fill="#42692e" />
+<path d="M860,249 L868,249 L864,257 Z" fill="#176d58" />
+<path d="M884,205 L892,205 L888,213 Z" fill="#176d58" />
+<path d="M884,139 L892,139 L888,131 Z" fill="#42692e" />
+<path d="M932,161 L940,161 L936,169 Z" fill="#176d58" />
+<path d="M956,227 L964,227 L960,219 Z" fill="#42692e" />
+<path d="M956,183 L964,183 L960,175 Z" fill="#42692e" />
+<path d="M1004,205 L1012,205 L1008,213 Z" fill="#176d58" />
+<path d="M1028,249 L1036,249 L1032,257 Z" fill="#176d58" />
+<path d="M1076,183 L1084,183 L1080,175 Z" fill="#42692e" />
+<path d="M1124,205 L1132,205 L1128,213 Z" fill="#176d58" />
+<path d="M1124,227 L1132,227 L1128,219 Z" fill="#42692e" />
+<path d="M1124,139 L1132,139 L1128,131 Z" fill="#42692e" />
+<path d="M1172,161 L1180,161 L1176,169 Z" fill="#176d58" />
+<path d="M1196,249 L1204,249 L1200,257 Z" fill="#176d58" />
+<path d="M1196,183 L1204,183 L1200,175 Z" fill="#42692e" />
+<path d="M1244,205 L1252,205 L1248,213 Z" fill="#176d58" />
+<path d="M1292,227 L1300,227 L1296,219 Z" fill="#42692e" />
+<path d="M1364,249 L1372,249 L1368,257 Z" fill="#176d58" />
+<path d="M1364,139 L1372,139 L1368,131 Z" fill="#42692e" />
+<path d="M1412,161 L1420,161 L1416,169 Z" fill="#176d58" />
+<path d="M1460,227 L1468,227 L1464,219 Z" fill="#42692e" />
+<path d="M1532,249 L1540,249 L1536,257 Z" fill="#176d58" />
+<path d="M1604,139 L1612,139 L1608,131 Z" fill="#42692e" />
+<path d="M1628,227 L1636,227 L1632,219 Z" fill="#42692e" />
+<path d="M1652,161 L1660,161 L1656,169 Z" fill="#176d58" />
+<path d="M1700,249 L1708,249 L1704,257 Z" fill="#176d58" />
+<path d="M1844,139 L1852,139 L1848,131 Z" fill="#42692e" />
+<path d="M1892,161 L1900,161 L1896,169 Z" fill="#176d58" />
+<path d="M2084,139 L2092,139 L2088,131 Z" fill="#42692e" />
+<path d="M2132,161 L2140,161 L2136,169 Z" fill="#176d58" />
+<path d="M2324,139 L2332,139 L2328,131 Z" fill="#42692e" />
+<path d="M2372,161 L2380,161 L2376,169 Z" fill="#176d58" />
+<text x="120" y="324" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Blocos: CPU mostra tarefa; tarefa mostra o número da CPU.</text>
+<rect x="120" y="342" width="23" height="16" fill="#7faacb" stroke="#526171" stroke-width="0.5" />
+<text x="153" y="350" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Execução</text>
+<rect x="380" y="342" width="23" height="16" fill="none" stroke="#526171" stroke-width="0.5" />
+<text x="413" y="350" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Pronta (só contorno)</text>
+<rect x="640" y="342" width="23" height="16" fill="url(#d1)" stroke="#526171" stroke-width="0.5" />
+<text x="673" y="350" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Suspensa (pontilhado)</text>
+<rect x="120" y="366" width="23" height="16" fill="url(#d0)" stroke="#526171" stroke-width="0.5" />
+<text x="153" y="374" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">CPU ociosa (hachura)</text>
+<path d="M136.0,402.0 L134.82842712474618,404.8284271247462 L132.0,406.0 L129.17157287525382,404.8284271247462 L128.0,402.0 L129.17157287525382,399.1715728752538 L132.0,398.0 L134.82842712474618,399.1715728752538 Z" fill="#215e99" />
+<text x="153" y="402" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Chegada</text>
+<path d="M388,406 L396,406 L392,398 Z" fill="#42692e" />
+<text x="413" y="402" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Ativação</text>
+<path d="M648,398 L656,398 L652,406 Z" fill="#176d58" />
+<text x="673" y="402" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Conclusão</text>
+<path d="M128,422 L136,430" stroke="#a62626" stroke-width="1" />
+<path d="M128,430 L136,422" stroke="#a62626" stroke-width="1" />
+<text x="153" y="426" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Perda de prazo</text>
+<path d="M388,422 L396,422 L396,430 L388,430 Z" fill="#855215" />
+<text x="413" y="426" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Fim de quantum</text>
+<path d="M652,422 L656,426 L652,430 L648,426 Z" fill="#6e3f97" />
+<text x="673" y="426" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Sorteio</text>
+<path d="M128,446 L130,446 L130,454 L128,454 Z" fill="#c026d3" />
+<path d="M134,446 L136,446 L136,454 L134,454 Z" fill="#c026d3" />
+<text x="153" y="450" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Preempção</text>
+<path d="M388,450 L396,450" stroke="#2563eb" stroke-width="1" />
+<path d="M392,446 L392,454" stroke="#2563eb" stroke-width="1" />
+<text x="413" y="450" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Inclusão manual</text>
+<path d="M648,450 L656,450" stroke="#dc2626" stroke-width="1" />
+<text x="673" y="450" font-size="13" fill="#243446" text-anchor="start" dominant-baseline="central" font-family="Segoe UI, sans-serif">Remoção manual</text>
+</svg>

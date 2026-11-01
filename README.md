@@ -1,8 +1,8 @@
 # Simulador de escalonamento - Projeto A
 
-Versão de envio ao Moodle. Esta pasta contém exatamente **20 arquivos**, todos
-na raiz: 10 módulos Python, 5 configurações, 1 textura, 1 script de construção,
-1 PDF, este README e 1 executável. Envie os arquivos avulsos, sem compactar.
+Versão de envio ao Moodle. Esta pasta contém exatamente **19 arquivos**, todos
+na raiz: 10 módulos Python, 5 configurações, 1 textura, 1 PDF, este README e 1
+executável. Envie os arquivos avulsos, sem compactar.
 
 ## Executar sem instalar Python ou bibliotecas
 
@@ -22,33 +22,30 @@ Também aceita um arquivo por argumento:
 A interface permite avançar/voltar, alterar tarefas e configuração, executar até
 dez conclusões por tarefa e exportar SVG. Ao terminar pela janela, salva o SVG ao
 lado da configuração sem sobrescrever arquivos existentes. Os SVGs resultantes
-são saídas do programa; não fazem parte dos 20 arquivos originais da entrega.
+são saídas do programa; não fazem parte dos 19 arquivos originais da entrega.
 
-## Gerar novamente o executável: o equivalente ao make
+## Executar a partir do código-fonte ou gerar novamente o executável
 
-O arquivo **make.ps1** usa **PyInstaller**. Para reconstruir, é necessário Python
-3.11 x64 no Windows e acesso à internet para obter as dependências fixadas no
-próprio script. No PowerShell, dentro desta pasta:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\make.ps1
-```
-
-Se o comando Python tiver outro nome ou caminho:
+Para executar diretamente os fontes em Python 3.11+, instale as duas bibliotecas
+utilizadas pelo projeto e inicie `gui.py`:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\make.ps1 -Python "C:\caminho\python.exe"
+pip install customtkinter==6.0.0 drawsvg==2.4.2
+python -B gui.py configuracao.txt
 ```
 
-O script cria um ambiente virtual temporário, instala as versões fixadas e gera
-somente SimuladorSO.exe nesta pasta. Os arquivos auxiliares de construção ficam
-fora dela e são removidos ao final. Feche o executável antes de reconstruí-lo.
-A opção -UsarAmbienteAtual reaproveita um Python que já tenha as quatro
-dependências instaladas; serve para desenvolvimento, sem criar outro ambiente.
+Para reconstruir **SimuladorSO.exe** por conta própria no Windows x64, instale o
+PyInstaller e execute o comando de empacotamento dentro desta pasta (feche o
+executável antes, caso esteja aberto):
 
-Para executar diretamente o código, instale customtkinter==6.0.0 e drawsvg==2.4.2
-no seu Python e use `python -B gui.py configuracao.txt`. O `-B` evita criar caches
-de bytecode ao lado dos fontes.
+```powershell
+pip install customtkinter==6.0.0 drawsvg==2.4.2 pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.9
+pyinstaller --noconfirm --clean --onefile --windowed --name SimuladorSO --distpath . --collect-data customtkinter --add-data "ociosa.xbm;." --copy-metadata customtkinter --copy-metadata drawsvg --copy-metadata darkdetect --copy-metadata packaging gui.py
+```
+
+O comando gera `SimuladorSO.exe` diretamente nesta pasta. As pastas auxiliares
+`build/` e o arquivo `SimuladorSO.spec` criados pelo PyInstaller durante a
+compilação podem ser apagados em seguida.
 
 ## Configurações incluídas
 
@@ -94,7 +91,7 @@ polígono circular azul; conclusão usa o triângulo verde para baixo.
 
 O PDF **Projeto-A-Telas-e-Origem-dos-Dados.pdf** apresenta as telas, a função dos
 controles e a origem dos dados. A textura ociosa.xbm é usada pelo Canvas e
-incluída no executável pelo script. O SVG usa sua própria textura vetorial.
+incluída no executável pelo PyInstaller. O SVG usa sua própria textura vetorial.
 
 ## Bibliotecas e licença
 
@@ -104,7 +101,7 @@ drawsvg: https://github.com/cduck/drawsvg
 
 A interface usa também Tkinter/Tcl/Tk, fornecidos com o Python. Metadados e
 licenças das bibliotecas coletadas acompanham o executável. A licença do código
-do projeto está reproduzida abaixo para manter a entrega em 20 arquivos.
+do projeto está reproduzida abaixo para manter a entrega em 19 arquivos.
 
 ```text
 MIT License

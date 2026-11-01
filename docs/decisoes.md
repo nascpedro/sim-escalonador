@@ -152,6 +152,10 @@ geram esse evento. O marcador usa duas barras magenta. Os rótulos ficam num
 Canvas separado, fixo na horizontal e sincronizado com a rolagem vertical.
 assets/ociosa.xbm fornece a textura nativa do Canvas; o SVG usa padrão vetorial.
 
+Chegada usa o polígono circular azul; conclusão usa o triângulo verde para baixo.
+A ativação periódica mantém o triângulo para cima. Tela, SVG e legenda usam a
+mesma função de marcadores, preservando as cores e os instantes dos eventos.
+
 Ao concluir pela janela, salva SVG ao lado da configuração. Um nome existente
 recebe sufixo numérico. Sem arquivo de entrada, solicita o destino ao concluir;
 cancelar mantém o resultado disponível para exportação posterior. Falhas de escrita preservam resultados e permitem escolher

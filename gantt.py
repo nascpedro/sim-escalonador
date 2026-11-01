@@ -141,7 +141,7 @@ def desenhar_rotulos(dados, destino):
 def marcador(destino, tipo, x, y, cor):
     """Formas pequenas com centro no tick real, compartilhadas pelos dois destinos."""
     if tipo == 'chegada':
-        pontos = [(x-4, y-4), (x+4, y-4), (x, y+4)]
+        pontos = [(x + 4*math.cos(i*math.pi/4), y + 4*math.sin(i*math.pi/4)) for i in range(8)]
     elif tipo == 'ativacao':
         pontos = [(x-4, y+4), (x+4, y+4), (x, y-4)]
     elif tipo == 'sorteio':
@@ -162,7 +162,7 @@ def marcador(destino, tipo, x, y, cor):
         destino.linha(x-4, y+4, x+4, y-4, cor)
         return
     elif tipo == 'conclusao':
-        pontos = [(x + 4*math.cos(i*math.pi/4), y + 4*math.sin(i*math.pi/4)) for i in range(8)]
+        pontos = [(x-4, y-4), (x+4, y-4), (x, y+4)]
     else:
         pontos = [(x-4, y-4), (x+4, y-4), (x+4, y+4), (x-4, y+4)]
     destino.poligono(pontos, cor)
